@@ -278,3 +278,23 @@
 - **Relleno:** el metal pasa a ser más sereno, de blanco a champán (#c9ad6a abajo), con sombras suaves y un brillo más tenue.
 - **«LA»:** queda como un sello rojo recto y fino, no rotado.
 - **Tiros:** son cinco aros finos sobre una línea champán que se desvanece a la derecha; el último va relleno.
+
+## V4.14 · Rendimiento y juego en móvil
+
+- **Reloj justo:** un bloqueo del navegador no descuenta más de 250 ms por tic.
+- **3D:** los shaders se compilan con `compileAsync` antes del primer dibujo.
+- **Calidad adaptativa:** si la mediana de fotogramas en la jugada supera 25 ms, pasa a resolución 1x y después quita las sombras. Se recuerda en `penaltis:v4:nivel3d`.
+- **Menos trabajo por fotograma:** `ResizeObserver` en lugar de medir la escena en cada fotograma, y se libera el contexto WebGL de prueba.
+- **Táctil:** sin `backdrop-filter` sobre el lienzo, sin desenfoque en la entrada de letras y 24 piezas de confeti en lugar de 44.
+- **Móvil tras el tiro:** se ocultan las opciones apagadas y el reloj, y la página se desplaza para que el veredicto quede entero encima del botón fijo.
+- **Hook de pruebas:** `pocPenaltis.escena3D.rendimiento()`.
+- **Mediciones:**
+  - El DS carga 1,2 MB de CSS en 143 hojas y el juego usa unos 28 KB.
+  - El juego pesa unos 78 KB con gzip; el 3D, otros 320 KB con gzip, cargados bajo demanda.
+
+## V4.15 · Publicable fuera del DS (GitHub Pages)
+
+- **`assets/ds/ds-la-tanda.css`:** subconjunto del DS de SPORT (46 KB, 9 KB con gzip) generado con PurgeCSS a partir de `setting.css` y `sport-index.css`. Incluye la fuente MediaSans en `assets/ds/fonts`.
+- **Carga:** `penaltis-V4.html` solo lo usa si los enlaces al DS dan error (`onerror`), así que dentro del repo del DS todo sigue igual.
+- **Verificación:** se ve idéntico píxel a píxel en entrada, gol, resultado, descanso, perfecto y jugado.
+- **`index.html`:** redirige a `penaltis-V4.html` conservando los parámetros de la URL.

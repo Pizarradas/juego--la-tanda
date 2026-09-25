@@ -7,10 +7,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- V4.4: color de la barra del navegador en Android y Safari -->
   <meta name="theme-color" content="#060a14">
+  <!-- V4.15: si el DS no está (GitHub Pages, móvil, fuera del repo del DS) se
+       carga assets/ds/ds-la-tanda.css, un subconjunto de 46 KB con solo lo que
+       usa el juego. Va justo detrás del enlace que falla, antes del CSS del POC. -->
+  <script>
+    function pocSinDS(enlace) {
+      if (document.getElementById('poc-ds-local')) { enlace.remove(); return; }
+      var l = document.createElement('link');
+      l.id = 'poc-ds-local'; l.rel = 'stylesheet'; l.href = 'assets/ds/ds-la-tanda.css';
+      enlace.after(l); enlace.remove();
+    }
+  </script>
   <!-- CSS: settings (SIEMPRE primero) -->
-  <link id="brandStyles-root" rel="stylesheet" href="../../../cds-statics/css/brands/sport/setting.css">
+  <link id="brandStyles-root" rel="stylesheet" href="../../../cds-statics/css/brands/sport/setting.css" onerror="pocSinDS(this)">
   <!-- CSS: library multibrand -->
-  <link id="brandStyles" rel="stylesheet" href="../../../cds-statics/css/sport-index.css">
+  <link id="brandStyles" rel="stylesheet" href="../../../cds-statics/css/sport-index.css" onerror="pocSinDS(this)">
   <!-- V4.8: marca SPORT (42DS · brands/sport) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2048%2048%27%3E%3Cpath%20fill-rule%3D%27evenodd%27%20fill%3D%27%23ec0918%27%20d%3D%27M24%200C10.7452%200%200%2010.7452%200%2024C0%2037.2548%2010.7452%2048%2024%2048C37.2548%2048%2048%2037.2548%2048%2024C48%2010.7452%2037.2548%200%2024%200ZM37.9518%2029.2285C37.9518%2036.1872%2031.731%2039.28%2022.9614%2039.28H10.563V30.9784H24.3006C25.4238%2030.9784%2025.9854%2030.5307%2025.9854%2029.8389C25.9854%2029.3506%2025.7262%2029.025%2025.2078%2028.8216C24.4734%2028.5367%2023.3502%2028.2925%2022.011%2028.0484C17.1726%2027.1531%209.87176%2025.7695%209.87176%2018.1597C9.87176%2011.6079%2015.5742%208.8%2023.4798%208.8H35.9214V17.1016H23.091C22.0974%2017.1016%2021.6222%2017.5086%2021.6222%2018.0783C21.6222%2019.0835%2023.0344%2019.3286%2025.0579%2019.6798C25.328%2019.7267%2025.609%2019.7754%2025.899%2019.8281C30.7374%2020.7234%2037.9518%2022.2698%2037.9518%2029.2285Z%27/%3E%3C/svg%3E">
 
@@ -2966,6 +2977,33 @@
     .poc-titulo__tiros i:nth-child(5) {
       background: #c9ad6a;
       box-shadow: 0 0 0.12em rgba(201, 173, 106, 0.6);
+    }
+
+    /* ==========================================================
+       V4.14 · RENDIMIENTO Y MÓVIL
+       ========================================================== */
+    /* Tras el tiro en móvil: fuera las opciones que no cuentan y el
+       reloj, para que el veredicto suba y se lea sin desplazarse. */
+    @media (max-width: 767px) {
+      body[data-poc-tiro="resuelto"] .poc-opcion.is-apagada { display: none; }
+      body[data-poc-tiro="resuelto"] #poc-reloj { display: none; }
+      body[data-poc-tiro="resuelto"] .poc-veredicto { margin-top: 0.8rem; }
+    }
+
+    /* En táctil, sin desenfoque de fondo sobre el lienzo 3D (se
+       recalcula en cada fotograma) ni blur en la entrada de letras. */
+    @media (pointer: coarse) {
+      .poc-estadio .poc-chip {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(6, 10, 20, 0.86);
+      }
+      .poc-rotulo.is-golpe .poc-rotulo__letra { animation-name: poc-r-letra-ligera; }
+    }
+    @keyframes poc-r-letra-ligera {
+      0% { opacity: 0; transform: translateY(-0.6em) scale(2.4) rotate(-8deg); }
+      60% { opacity: 1; }
+      100% { opacity: 1; transform: none; }
     }
   </style>
 </head>

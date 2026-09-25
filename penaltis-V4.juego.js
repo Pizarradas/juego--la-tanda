@@ -756,7 +756,11 @@
     if (new URLSearchParams(global.location.search).get('escena') === '2d') { return false; }
     try {
       var c = document.createElement('canvas');
-      return !!(global.WebGL2RenderingContext && c.getContext('webgl2'));
+      var gl = global.WebGL2RenderingContext && c.getContext('webgl2');
+      /* V4.14: se libera el contexto de prueba (los móviles admiten pocos) */
+      var ext = gl && gl.getExtension('WEBGL_lose_context');
+      if (ext) { ext.loseContext(); }
+      return !!gl;
     } catch (e) { return false; }
   }
 
@@ -794,6 +798,7 @@
       });
     }).then(function (api) {
       escena3D.api = api;
+      global.pocPenaltis && (global.pocPenaltis.escena3D = api); /* solo pruebas */
       dom.escena.classList.remove('is-cargando3d');
       activar3D();
       return api;
@@ -836,7 +841,9 @@
 
   function montarConfeti(caja) {
     var html = '';
-    for (var i = 0; i < 44; i++) {
+    /* V4.14: menos piezas en táctil (móviles) */
+    var piezas = global.matchMedia && global.matchMedia('(pointer: coarse)').matches ? 24 : 44;
+    for (var i = 0; i < piezas; i++) {
       var ang = Math.random() * Math.PI * 2;
       var dist = 18 + Math.random() * 34;
       var x = Math.cos(ang) * dist;
@@ -998,7 +1005,9 @@
     var r = estado.reloj;
     if (!r || !r.id) { return; }
     var ahora = performance.now();
-    if (!document.hidden) { r.restante -= ahora - r.ultimo; }
+    /* V4.14: reloj justo. Un bloqueo del navegador (p. ej. al preparar el
+       3D en un móvil modesto) no descuenta más de 250 ms por tic. */
+    if (!document.hidden) { r.restante -= Math.min(ahora - r.ultimo, 250); }
     r.ultimo = ahora;
     if (!r.avisado && r.restante <= 5000 && r.total > 5000) {
       r.avisado = true;
@@ -1164,6 +1173,23 @@
       dom.siguiente.textContent = ultimo ? 'Ver resultado' : 'Siguiente penalti';
       dom.accionesJuego.hidden = false;
       enfocar(dom.siguiente);
+      verVeredicto();
+    });
+  }
+
+  /* V4.14 · móvil: tras el tiro, el veredicto (la correcta y el dato)
+     tiene que verse sin buscarlo. Las opciones que no cuentan se
+     recogen por CSS y aquí se desplaza lo justo para que el veredicto
+     quede encima del botón fijo «Siguiente penalti». */
+  function verVeredicto() {
+    if (global.innerWidth >= 768) { return; }
+    global.requestAnimationFrame(function () {
+      var fijo = dom.accionesJuego.getBoundingClientRect();
+      var limite = (fijo.height ? fijo.top : global.innerHeight) - 12;
+      var falta = dom.veredicto.getBoundingClientRect().bottom - limite;
+      if (falta > 0) {
+        global.scrollBy({ top: falta, behavior: reducirMovimiento ? 'auto' : 'smooth' });
+      }
     });
   }
 

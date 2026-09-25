@@ -1590,8 +1590,39 @@ export async function crearEscena(contenedor, opciones = {}) {
   let raf = 0;
   let ultimoCuadro = 0;
   let ancho = 0, alto = 0;
+  /* V4.14: medir el contenedor solo cuando cambia (antes, cada fotograma
+     forzaba un layout con getBoundingClientRect) */
+  let medir = true;
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => { medir = true; }) : null;
+  if (ro) ro.observe(contenedor);
+
+  /* V4.14: calidad adaptativa. Si durante la jugada los fotogramas van
+     lentos (mediana > 25 ms), baja un escalón y lo recuerda para la
+     próxima visita: 1) resolución 1x, 2) sin sombras. */
+  const CLAVE_NIVEL = 'penaltis:v4:nivel3d';
+  let nivel = 0;
+  try { nivel = Math.min(2, Number(localStorage.getItem(CLAVE_NIVEL)) || 0); } catch (e) { /* sin almacenamiento */ }
+  const muestras = [];
+  function aplicarNivel() {
+    if (nivel >= 1) { render.setPixelRatio(1); ancho = 0; medir = true; }
+    if (nivel >= 2 && foco.castShadow) { foco.castShadow = false; escena.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.needsUpdate = true; }); }); }
+  }
+  function vigilar(dt) {
+    if (opciones.calidad || nivel >= 2 || dt <= 0 || dt > 250) return;
+    muestras.push(dt);
+    if (muestras.length < 40) return;
+    const orden = muestras.slice().sort((a, b) => a - b);
+    muestras.length = 0;
+    if (orden[20] > 25) {
+      nivel += 1;
+      try { localStorage.setItem(CLAVE_NIVEL, String(nivel)); } catch (e) { /* sin almacenamiento */ }
+      aplicarNivel();
+    }
+  }
 
   function ajustar() {
+    if (!medir) return;
+    medir = false;
     const r = contenedor.getBoundingClientRect();
     const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     if (w === ancho && h === alto) return;
@@ -1607,6 +1638,7 @@ export async function crearEscena(contenedor, opciones = {}) {
     ajustar();
     const dt = ahora - ultimoCuadro;
     if (reloj.modo === 'espera' && dt < 1000 / 30) { pedir(); return; }
+    if (reloj.modo !== 'espera' && ultimoCuadro) vigilar(dt);
     ultimoCuadro = ahora;
     const tr = (ahora - reloj.t0) / 1000;
     if (reloj.modo === 'espera') {
@@ -1740,6 +1772,11 @@ export async function crearEscena(contenedor, opciones = {}) {
       } else camaraRetransmision(t, plan);
       render.render(escena, camara);
     },
+    /* Solo pruebas: coste de dibujo (llamadas, triángulos, texturas) */
+    rendimiento() {
+      const i = render.info;
+      return { calidad, nivel, pixelRatio: render.getPixelRatio(), lienzo: [lienzoGL.width, lienzoGL.height], llamadas: i.render.calls, triangulos: i.render.triangles, geometrias: i.memory.geometries, texturas: i.memory.textures, sombra: foco.shadow.mapSize.x };
+    },
     /* Solo pruebas: una pose suelta, para ajustarla (quien, pose, raiz, pivote, modo, vista) */
     laboratorio({ quien = 'portero', pose = {}, pivote = {}, modo = 'pies', vista = 'cerca:portero:0' } = {}) {
       const inst = quien === 'portero' ? portero : lanzador;
@@ -1803,15 +1840,20 @@ export async function crearEscena(contenedor, opciones = {}) {
       cancelAnimationFrame(raf); visible = false;
       if (io) io.disconnect();
       document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+      if (ro) ro.disconnect();
       sonido.destruir();
       render.dispose();
       lienzoGL.remove();
     }
   };
 
+  aplicarNivel();
   ajustar();
   evaluar(0);
   camaraRetransmision(0, null);
+  /* V4.14: compila los shaders sin bloquear (KHR_parallel_shader_compile)
+     antes del primer dibujo: el reloj de la pregunta no se congela. */
+  if (render.compileAsync) { try { await render.compileAsync(escena, camara); } catch (e) { /* se compila al dibujar */ } }
   render.render(escena, camara);
   pedir();
   return api;
