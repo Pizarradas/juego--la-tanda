@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <title>42DS | POC: Tanda de penaltis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- CSS: settings (SIEMPRE primero) -->
+  <link id="brandStyles-root" rel="stylesheet" href="../../../cds-statics/css/brands/ux/setting.css">
+  <!-- CSS: library multibrand -->
+  <link id="brandStyles" rel="stylesheet" href="../../../cds-statics/css/ux-index.css">
+  <link rel="icon" href="../../favicon.png" type="image/png">
+
+  <!-- CSS local del POC: escena del penalti, opciones-esquina y marcador de tanda.
+       El DS no tiene ninguna de las tres piezas; todo va con prefijo .poc-. -->
+  <style>
+    :root {
+      --poc-penaltis-ancho: 520px;
+      --poc-penaltis-grada: var(--color-darkGrey);
+      --poc-penaltis-cesped: var(--color-cuatroencampo);
+      --poc-penaltis-cesped-claro: var(--color-cuatroencampo--light);
+      --poc-penaltis-linea: var(--color-white);
+      --poc-penaltis-red: var(--color-lightGrey);
+      --poc-penaltis-portero: var(--color-functional-warning);
+      --poc-penaltis-lanzador: var(--color-functional-info);
+      --poc-penaltis-piel: var(--color-illustrations-skin-5);
+      --poc-penaltis-ok: var(--color-functional-success);
+      --poc-penaltis-ko: var(--color-functional-error);
+      --poc-penaltis-foco: var(--color-black);
+    }
+
+    .poc-fila {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    .poc-bloque {
+      max-width: var(--poc-penaltis-ancho);
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+
+    /* OVERRIDE: ft-org-game centra a sus hijos en columna y les deja el
+       ancho del contenido. Aquí el bloque de juego tiene que ocupar su ancho. */
+    .poc-juego.ft-org-game {
+      align-items: stretch;
+      margin-top: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .poc-sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .poc-cabecera-juego {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    /* Los títulos reciben foco por código para situar al lector de pantalla;
+       no son interactivos, así que no pintan anillo de foco. */
+    h2[tabindex="-1"]:focus { outline: none; }
+
+    /* ---------- MARCADOR DE LA TANDA ---------- */
+    /* Los helpers ft-helper-spacer-* del DS son padding-bottom:
+       aquí solo se anula el sangrado de la lista. */
+    .poc-tanda {
+      display: flex;
+      gap: 0.6rem;
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+    }
+
+    .poc-tanda__tiro {
+      display: grid;
+      place-items: center;
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 50%;
+      border: 2px solid var(--color-mediumGrey);
+      background: var(--color-white);
+      /* Negro sobre verde y rojo funcionales: 8,7:1 y 6,1:1. El blanco no llega a 3:1 en el verde. */
+      color: var(--color-black);
+      font-size: 1.4rem;
+      line-height: 1;
+      font-weight: bold;
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="actual"] {
+      border-color: var(--color-black);
+      border-width: 3px;
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="gol"] {
+      background: var(--poc-penaltis-ok);
+      border-color: var(--poc-penaltis-ok);
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="parada"] {
+      background: var(--poc-penaltis-ko);
+      border-color: var(--poc-penaltis-ko);
+    }
+
+    .poc-tanda--grande .poc-tanda__tiro {
+      width: 4rem;
+      height: 4rem;
+      font-size: 1.8rem;
+    }
+
+    /* ---------- ESCENA ---------- */
+    .poc-escena {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--poc-penaltis-grada);
+      line-height: 0;
+      margin-bottom: 1.2rem;
+    }
+
+    .poc-escena svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .poc-escena .poc-grada { fill: var(--poc-penaltis-grada); }
+    .poc-escena .poc-grada-puntos { fill: var(--color-mediumGrey); opacity: 0.35; }
+    .poc-escena .poc-cesped { fill: var(--poc-penaltis-cesped); }
+    .poc-escena .poc-cesped-franja { fill: var(--poc-penaltis-cesped-claro); opacity: 0.25; }
+    .poc-escena .poc-linea { stroke: var(--poc-penaltis-linea); fill: none; stroke-width: 2; }
+    .poc-escena .poc-punto { fill: var(--poc-penaltis-linea); }
+    .poc-escena .poc-red { stroke: var(--poc-penaltis-red); stroke-width: 0.8; opacity: 0.55; }
+    .poc-escena .poc-poste { fill: var(--color-white); }
+
+    .poc-escena .poc-red-grupo {
+      transform-box: fill-box;
+      transform-origin: 50% 0;
+    }
+
+    .poc-escena .poc-diana circle {
+      fill: var(--color-white);
+      fill-opacity: 0.18;
+      stroke: var(--color-white);
+      stroke-width: 1.5;
+      stroke-dasharray: 3 3;
+      transition: fill-opacity 0.2s, stroke-width 0.2s;
+    }
+
+    .poc-escena .poc-diana text {
+      fill: var(--color-white);
+      font: bold 13px/1 var(--font-stack, sans-serif);
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .poc-escena .poc-diana.is-correcta text,
+    .poc-escena .poc-diana.is-fallada text { fill: var(--color-black); }
+
+    .poc-escena .poc-diana.is-apuntada circle {
+      fill-opacity: 0.45;
+      stroke-width: 3;
+      stroke-dasharray: none;
+    }
+
+    .poc-escena .poc-diana.is-correcta circle {
+      fill: var(--poc-penaltis-ok);
+      fill-opacity: 1;
+      stroke-dasharray: none;
+      stroke-width: 3;
+    }
+
+    .poc-escena .poc-diana.is-fallada circle {
+      fill: var(--poc-penaltis-ko);
+      fill-opacity: 1;
+      stroke-dasharray: none;
+    }
+
+    .poc-escena .poc-portero,
+    .poc-escena .poc-lanzador,
+    .poc-escena .poc-balon {
+      transform-box: fill-box;
+    }
+
+    .poc-escena .poc-portero { transform-origin: 50% 100%; }
+    .poc-escena .poc-lanzador { transform-origin: 50% 100%; }
+    .poc-escena .poc-balon { transform-origin: 50% 50%; }
+
+    .poc-escena .poc-camiseta-portero { fill: var(--poc-penaltis-portero); }
+    .poc-escena .poc-camiseta-lanzador { fill: var(--poc-penaltis-lanzador); }
+    .poc-escena .poc-piel { fill: var(--poc-penaltis-piel); }
+    .poc-escena .poc-pantalon { fill: var(--color-black); }
+    .poc-escena .poc-guante { fill: var(--color-white); stroke: var(--color-black); stroke-width: 1; }
+    .poc-escena .poc-balon circle { fill: var(--color-white); stroke: var(--color-black); stroke-width: 1.2; }
+    .poc-escena .poc-balon path { fill: var(--color-black); }
+    .poc-escena .poc-sombra { fill: var(--color-black); opacity: 0.2; }
+
+    /* Rótulo sobre la escena: grande y breve. El detalle va en el texto de debajo. */
+    /* Debajo del larguero y por encima del lanzador: no tapa ninguna esquina. */
+    .poc-rotulo {
+      position: absolute;
+      left: 50%;
+      top: 68%;
+      transform: translate(-50%, -50%) scale(0.6);
+      padding: 0.6rem 1.6rem;
+      border-radius: 999px;
+      font-size: 1.8rem;
+      line-height: 1.2;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-white);
+      background: var(--color-black);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.25s cubic-bezier(.2, 1.6, .5, 1);
+    }
+
+    .poc-rotulo.is-visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .poc-rotulo[data-poc-resultado="gol"],
+    .poc-rotulo[data-poc-resultado="parada"] { color: var(--color-black); }
+    .poc-rotulo[data-poc-resultado="gol"] { background: var(--poc-penaltis-ok); }
+    .poc-rotulo[data-poc-resultado="parada"] { background: var(--poc-penaltis-ko); }
+
+    /* ---------- OPCIONES = ESQUINAS ---------- */
+    .poc-opciones {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+      border: 0;
+    }
+
+    .poc-opcion {
+      appearance: none;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-height: 6.4rem;
+      width: 100%;
+      margin: 0;
+      padding: 0.8rem 1rem;
+      border: 2px solid var(--color-mediumGrey);
+      border-radius: 10px;
+      background: var(--color-white);
+      color: var(--color-black);
+      font: inherit;
+      font-size: 1.5rem;
+      line-height: 1.3;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    /* Las esquinas de arriba (A, B) alinean el texto arriba; las de abajo, abajo.
+       Refuerza la idea de que cada botón ES una esquina de la portería. */
+    .poc-opcion[data-poc-esquina="A"],
+    .poc-opcion[data-poc-esquina="B"] { align-items: flex-start; }
+    .poc-opcion[data-poc-esquina="C"],
+    .poc-opcion[data-poc-esquina="D"] { align-items: flex-end; }
+    .poc-opcion[data-poc-esquina="B"],
+    .poc-opcion[data-poc-esquina="D"] { flex-direction: row-reverse; text-align: right; }
+
+    .poc-opcion:hover:not([aria-disabled="true"]) { border-color: var(--color-black); }
+    .poc-opcion:active:not([aria-disabled="true"]) { transform: scale(0.98); }
+
+    .poc-opcion:focus-visible {
+      outline: 3px solid var(--poc-penaltis-foco);
+      outline-offset: 2px;
+    }
+
+    .poc-opcion[aria-disabled="true"] { cursor: default; }
+
+    .poc-opcion__letra {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 50%;
+      background: var(--color-black);
+      color: var(--color-white);
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    .poc-opcion__texto { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+
+    .poc-opcion__estado {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 0.2rem;
+    }
+
+    .poc-opcion.is-correcta { border-color: var(--poc-penaltis-ok); border-width: 3px; }
+    .poc-opcion.is-correcta .poc-opcion__letra { background: var(--poc-penaltis-ok); color: var(--color-black); }
+    .poc-opcion.is-fallada { border-color: var(--poc-penaltis-ko); border-width: 3px; }
+    .poc-opcion.is-fallada .poc-opcion__letra { background: var(--poc-penaltis-ko); color: var(--color-black); }
+    .poc-opcion.is-apagada { opacity: 0.55; }
+
+    /* ---------- VEREDICTO DEL TIRO ---------- */
+    .poc-veredicto {
+      border-left: 4px solid var(--color-mediumGrey);
+      padding: 0.4rem 0 0.4rem 1.2rem;
+      margin-bottom: 2.4rem;
+      color: var(--color-black);
+    }
+
+    .poc-veredicto[data-poc-resultado="gol"] { border-color: var(--poc-penaltis-ok); }
+    .poc-veredicto[data-poc-resultado="parada"] { border-color: var(--poc-penaltis-ko); }
+
+    .poc-acciones {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .poc-ayuda-teclado {
+      text-align: center;
+      color: var(--color-black);
+    }
+
+    @media (min-width: 768px) {
+      .poc-rotulo { font-size: 2.4rem; }
+    }
+
+    kbd {
+      font: inherit;
+      font-weight: bold;
+      padding: 0 0.4rem;
+      border: 1px solid var(--color-mediumGrey);
+      border-radius: 4px;
+    }
+
+    /* ---------- ENTRADA: mini esquema de las esquinas ---------- */
+    .poc-esquema {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.4rem;
+      max-width: 22rem;
+      padding: 0.6rem;
+      border: 4px solid var(--color-black);
+      border-bottom: 0;
+      margin: 0 auto 1.6rem;
+    }
+
+    .poc-esquema span {
+      display: grid;
+      place-items: center;
+      height: 3.6rem;
+      border-radius: 4px;
+      background: var(--color-lightGrey);
+      color: var(--color-black);
+      font-weight: bold;
+      font-size: 1.4rem;
+    }
+
+    /* ---------- RESULTADO ---------- */
+    .poc-compartir-salida {
+      width: 100%;
+      min-height: 8rem;
+      resize: none;
+      font-family: monospace;
+      font-size: 1.4rem;
+      border: 2px solid var(--color-lightGrey);
+      border-radius: 4px;
+      padding: 0.8rem;
+      background: var(--color-white);
+      color: var(--color-black);
+    }
+
+    .poc-repaso li { margin-bottom: 1.2rem; }
+
+    .poc-repaso__marca {
+      display: inline-block;
+      padding: 0 0.6rem;
+      margin-right: 0.4rem;
+      border-radius: 4px;
+      font-weight: bold;
+      color: var(--color-black);
+    }
+
+    .poc-repaso__marca[data-poc-resultado="gol"] { background: var(--poc-penaltis-ok); }
+    .poc-repaso__marca[data-poc-resultado="parada"] { background: var(--poc-penaltis-ko); }
+
+    /* ---------- CARGANDO ---------- */
+    .poc-esqueleto {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .poc-esqueleto span {
+      display: block;
+      border-radius: 10px;
+      background: var(--color-lightGrey);
+      animation: poc-latido 1.4s ease-in-out infinite;
+    }
+
+    .poc-esqueleto__escena { aspect-ratio: 360 / 260; }
+    .poc-esqueleto__opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .poc-esqueleto__opciones span { height: 6.4rem; }
+
+    @keyframes poc-latido {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .poc-pie a {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-esqueleto span { animation: none; }
+      .poc-rotulo,
+      .poc-opcion,
+      .poc-escena .poc-diana circle { transition: none; }
+    }
+  </style>
+</head>
+
+<body class="fourty ft-brand-ux">
+  <a class="ft-skiplink" href="#poc-contenido">Saltar al juego</a>
+
+  <main class="ft-layout-grid-flex">
+    <div class="ft-layout-grid-flex__row">
+      <div
+        class="ft-layout-grid-flex__colXs-12 ft-layout-grid-flex__colMd-8 ft-layout-grid-flex__colMdOffset-2">
+        <div id="poc-contenido" class="ft-layout-grid-flex__nested ft-helper-spacer-inner-md">
+
+          <!-- CABECERA -->
+          <header class="poc-fila poc-bloque ft-helper-spacer-b-md" data-poc-date="2026-09-25">
+            <h1 class="ft-title ft-helper-fontSize-heading-M ft-helper-spacer-b-xs">Tanda de penaltis</h1>
+            <p class="ft-text ft-helper-fontSize-body-S">
+              Cinco preguntas de fútbol. Aciertas, es gol. Fallas, te la para el portero.
+            </p>
+            <p id="poc-aviso" class="ft-text ft-helper-fontSize-body-XS ft-helper-spacer-t-xs" role="status" hidden></p>
+          </header>
+
+          <!-- ESTADO: CARGANDO -->
+          <section id="poc-vista-cargando" class="poc-fila poc-bloque" aria-busy="true"
+            aria-label="Cargando la tanda de hoy" data-poc-date="2026-09-25">
+            <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-sm">Preparando la tanda de hoy…</p>
+            <div class="poc-esqueleto" aria-hidden="true">
+              <span style="height: 2.4rem; width: 70%"></span>
+              <span class="poc-esqueleto__escena"></span>
+              <div class="poc-esqueleto__opciones"><span></span><span></span><span></span><span></span></div>
+            </div>
+          </section>
+
+          <!-- ESTADO: ERROR -->
+          <section id="poc-vista-error" class="poc-fila poc-bloque" data-poc-date="2026-09-25" hidden>
+            <h2 class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-xs" tabindex="-1">
+              No se puede jugar esta tanda
+            </h2>
+            <div class="ft-mol-advice">
+              <div class="ft-mol-advice__content">
+                <span class="ft-mol-advice__title">Tanda no válida</span>
+              </div>
+            </div>
+            <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-sm">
+              Hay un problema con las preguntas de hoy y no se publica hasta corregirlo.
+            </p>
+            <ul id="poc-error-detalle" class="ft-list ft-helper-spacer-b-md"></ul>
+            <div class="poc-acciones">
+              <a class="ft-btn ft-btn--primary ft-btn--md" href="penaltis.html">Volver a intentarlo</a>
+            </div>
+          </section>
+
+          <!-- ESTADO: VACÍO -->
+          <section id="poc-vista-vacio" class="poc-fila poc-bloque" data-poc-date="2026-09-25" hidden>
+            <h2 class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-xs" tabindex="-1">
+              Hoy todavía no hay tanda
+            </h2>
+            <div class="ft-mol-advice">
+              <div class="ft-mol-advice__content">
+                <span class="ft-mol-advice__title">Sin tanda</span>
+              </div>
+            </div>
+            <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-md">
+              La redacción aún no ha publicado las preguntas de hoy. Vuelve en un rato o tira la de ayer.
+            </p>
+            <div class="poc-acciones">
+              <a class="ft-btn ft-btn--primary ft-btn--md" href="penaltis.html?fecha=2026-09-24">Tirar la tanda de ayer</a>
+            </div>
+          </section>
+
+          <!-- ESTADO: ENTRADA -->
+          <section id="poc-vista-entrada" class="poc-fila poc-bloque" aria-labelledby="poc-entrada-titulo"
+            data-poc-date="2026-09-25" hidden>
+            <h2 id="poc-entrada-titulo" class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-sm" tabindex="-1">
+              Tanda <span id="poc-entrada-numero">#0</span> · <span id="poc-entrada-fecha">hoy</span>
+            </h2>
+
+            <div class="poc-esquema" aria-hidden="true">
+              <span>A</span><span>B</span><span>C</span><span>D</span>
+            </div>
+            <p class="ft-text ft-helper-fontSize-body-M ft-helper-spacer-b-md">
+              Cada respuesta es una esquina de la portería. Elige la correcta y tu jugador chuta ahí:
+              si aciertas, es gol; si fallas, el portero se tira a esa esquina y te la para.
+            </p>
+
+            <div class="poc-acciones ft-helper-spacer-b-sm">
+              <button id="poc-empezar" type="button" class="ft-btn ft-btn--primary ft-btn--md">Empezar la tanda</button>
+            </div>
+            <p class="ft-text ft-helper-fontSize-body-XS poc-ayuda-teclado">
+              Con teclado: <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> para chutar,
+              <kbd>Intro</kbd> para el siguiente penalti.
+            </p>
+          </section>
+
+          <!-- ESTADO: JUEGO -->
+          <section id="poc-vista-juego" class="poc-fila poc-bloque poc-juego ft-org-game" aria-labelledby="poc-pregunta"
+            data-poc-date="2026-09-25" hidden>
+
+            <div class="poc-cabecera-juego ft-helper-spacer-b-sm">
+              <span id="poc-numero-tiro" class="ft-tag ft-tag--sm">Penalti 1 de 5</span>
+              <ol id="poc-tanda" class="poc-tanda" aria-label="Marcador de la tanda"></ol>
+            </div>
+
+            <h2 id="poc-pregunta" class="poc-pregunta ft-title ft-helper-fontSize-heading-XS ft-helper-spacer-b-sm"
+              tabindex="-1"></h2>
+
+            <div class="poc-escena" aria-hidden="true">
+              <svg viewBox="0 0 360 260" focusable="false">
+                <!-- grada -->
+                <rect class="poc-grada" x="0" y="0" width="360" height="110" />
+                <g class="poc-grada-puntos">
+                  <circle cx="12" cy="14" r="3" /><circle cx="36" cy="22" r="3" /><circle cx="60" cy="12" r="3" />
+                  <circle cx="84" cy="26" r="3" /><circle cx="108" cy="16" r="3" /><circle cx="132" cy="24" r="3" />
+                  <circle cx="156" cy="12" r="3" /><circle cx="180" cy="22" r="3" /><circle cx="204" cy="14" r="3" />
+                  <circle cx="228" cy="26" r="3" /><circle cx="252" cy="16" r="3" /><circle cx="276" cy="24" r="3" />
+                  <circle cx="300" cy="12" r="3" /><circle cx="324" cy="22" r="3" /><circle cx="348" cy="14" r="3" />
+                </g>
+                <!-- césped -->
+                <rect class="poc-cesped" x="0" y="110" width="360" height="150" />
+                <rect class="poc-cesped-franja" x="0" y="150" width="360" height="30" />
+                <rect class="poc-cesped-franja" x="0" y="210" width="360" height="30" />
+                <!-- área pequeña y punto de penalti -->
+                <path class="poc-linea" d="M0 150 H360 M40 150 L20 185 H340 L320 150" />
+                <ellipse class="poc-punto" cx="180" cy="222" rx="4" ry="2" />
+
+                <!-- red -->
+                <g class="poc-red-grupo" id="poc-red">
+                  <rect x="56" y="36" width="248" height="114" fill="var(--color-white)" fill-opacity="0.08" />
+                  <path class="poc-red"
+                    d="M72 36V150M88 36V150M104 36V150M120 36V150M136 36V150M152 36V150M168 36V150M184 36V150M200 36V150M216 36V150M232 36V150M248 36V150M264 36V150M280 36V150M296 36V150
+                       M56 50H304M56 64H304M56 78H304M56 92H304M56 106H304M56 120H304M56 134H304" />
+                </g>
+                <!-- postes -->
+                <rect class="poc-poste" x="52" y="32" width="6" height="120" />
+                <rect class="poc-poste" x="302" y="32" width="6" height="120" />
+                <rect class="poc-poste" x="52" y="30" width="256" height="6" />
+
+                <!-- dianas A-D -->
+                <g class="poc-diana" data-poc-diana="A"><circle cx="92" cy="66" r="18" /><text x="92" y="66">A</text></g>
+                <g class="poc-diana" data-poc-diana="B"><circle cx="268" cy="66" r="18" /><text x="268" y="66">B</text></g>
+                <g class="poc-diana" data-poc-diana="C"><circle cx="92" cy="124" r="18" /><text x="92" y="124">C</text></g>
+                <g class="poc-diana" data-poc-diana="D"><circle cx="268" cy="124" r="18" /><text x="268" y="124">D</text></g>
+
+                <!-- portero: pies en (180,150) -->
+                <g class="poc-portero" id="poc-portero">
+                  <ellipse class="poc-sombra" cx="180" cy="151" rx="16" ry="3" />
+                  <rect class="poc-pantalon" x="171" y="126" width="7" height="24" rx="3" />
+                  <rect class="poc-pantalon" x="182" y="126" width="7" height="24" rx="3" />
+                  <rect class="poc-camiseta-portero" x="167" y="96" width="26" height="34" rx="7" />
+                  <path class="poc-camiseta-portero" d="M169 102 L148 82 L153 77 L173 96 Z M191 102 L212 82 L207 77 L187 96 Z" />
+                  <circle class="poc-guante" cx="149" cy="78" r="5" />
+                  <circle class="poc-guante" cx="211" cy="78" r="5" />
+                  <circle class="poc-piel" cx="180" cy="87" r="9" />
+                </g>
+
+                <!-- balón -->
+                <g class="poc-balon" id="poc-balon">
+                  <circle cx="180" cy="216" r="8" />
+                  <path d="M180 212 l3.5 2.5 -1.3 4 h-4.4 l-1.3 -4 Z" />
+                </g>
+
+                <!-- lanzador, de espaldas: pies en (150,258) -->
+                <g class="poc-lanzador" id="poc-lanzador">
+                  <ellipse class="poc-sombra" cx="150" cy="258" rx="18" ry="3" />
+                  <rect class="poc-piel" x="140" y="236" width="8" height="22" rx="3" />
+                  <rect class="poc-piel" x="153" y="236" width="8" height="22" rx="3" />
+                  <rect class="poc-pantalon" x="137" y="226" width="27" height="14" rx="3" />
+                  <rect class="poc-camiseta-lanzador" x="134" y="194" width="33" height="36" rx="8" />
+                  <text x="150.5" y="217" fill="var(--color-white)" font-size="14" font-weight="bold" text-anchor="middle">9</text>
+                  <circle class="poc-pantalon" cx="150.5" cy="185" r="10" />
+                </g>
+              </svg>
+              <p id="poc-rotulo" class="poc-rotulo"></p>
+            </div>
+
+            <!-- Opciones: el orden del DOM (A, B, C, D) coincide con la lectura
+                 y con la posición de las esquinas en la portería. -->
+            <div id="poc-opciones" class="poc-opciones ft-helper-spacer-b-sm" role="group"
+              aria-label="Respuestas. Cada una es una esquina de la portería."></div>
+
+            <!-- Anuncio para lector de pantalla: la región existe siempre y solo cambia su texto. -->
+            <p id="poc-anuncio" class="poc-sr" role="status" aria-live="polite"></p>
+
+            <!-- Veredicto visible tras la animación del tiro. -->
+            <div id="poc-veredicto" class="poc-veredicto" hidden>
+              <p id="poc-veredicto-titulo" class="ft-title ft-helper-fontSize-heading-XXS ft-helper-spacer-b-xxs"></p>
+              <p id="poc-veredicto-dato" class="ft-text ft-helper-fontSize-body-S"></p>
+            </div>
+
+            <div class="poc-acciones">
+              <button id="poc-siguiente" type="button" class="ft-btn ft-btn--primary ft-btn--md" hidden>
+                Siguiente penalti
+              </button>
+            </div>
+            <p id="poc-ayuda-teclado" class="ft-text ft-helper-fontSize-body-XS poc-ayuda-teclado ft-helper-spacer-t-sm">
+              Pulsa <kbd>A</kbd>, <kbd>B</kbd>, <kbd>C</kbd> o <kbd>D</kbd>, o muévete con las flechas.
+            </p>
+          </section>
+
+          <!-- ESTADO: RESULTADO (éxito de la tanda) -->
+          <section id="poc-vista-resultado" class="poc-fila poc-bloque" aria-labelledby="poc-resultado-titulo"
+            data-poc-date="2026-09-25" hidden>
+            <p id="poc-resultado-previo" class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-xs" hidden>
+              Ya tiraste la tanda de hoy. Este fue tu resultado.
+            </p>
+            <h2 id="poc-resultado-titulo" class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-xs" tabindex="-1"></h2>
+            <p id="poc-resultado-frase" class="ft-text ft-helper-fontSize-body-M ft-helper-spacer-b-sm"></p>
+            <ol id="poc-resultado-tanda" class="poc-tanda poc-tanda--grande ft-helper-spacer-b-md" aria-label="Tu tanda"></ol>
+
+            <label class="ft-text ft-helper-fontSize-body-S" for="poc-compartir-salida">Resultado para compartir</label>
+            <textarea id="poc-compartir-salida" class="poc-compartir-salida ft-helper-spacer-b-sm" readonly rows="4"></textarea>
+            <div class="poc-acciones ft-helper-spacer-b-xs">
+              <button id="poc-compartir" type="button" class="ft-btn ft-btn--primary ft-btn--md">Copiar resultado</button>
+            </div>
+            <p id="poc-compartir-estado" class="ft-text ft-helper-fontSize-body-XS poc-ayuda-teclado ft-helper-spacer-b-md"
+              role="status" aria-live="polite"></p>
+
+            <h3 class="ft-title ft-helper-fontSize-heading-XXS ft-helper-spacer-b-xs">Repaso de la tanda</h3>
+            <ol id="poc-repaso" class="poc-repaso ft-list ft-helper-spacer-b-md"></ol>
+
+            <p class="ft-text ft-helper-fontSize-body-S">
+              Mañana, a las 00:00, hay tanda nueva.
+              <a id="poc-enlace-ayer" class="ft-link" href="penaltis.html?fecha=2026-09-24">Tirar la tanda de ayer</a>
+            </p>
+          </section>
+
+          <!-- PIE DEL POC: no forma parte del producto -->
+          <footer class="poc-fila poc-bloque poc-pie ft-helper-spacer-t-lg" data-poc-date="2026-09-25">
+            <p class="ft-text ft-helper-fontSize-body-XS">
+              POC. Estados para revisión:
+              <a class="ft-link" href="penaltis.html?estado=cargando">cargando</a> ·
+              <a class="ft-link" href="penaltis.html?estado=error">error</a> ·
+              <a class="ft-link" href="penaltis.html?estado=vacio">vacío</a> ·
+              <a class="ft-link" href="penaltis.html?estado=entrada">entrada</a> ·
+              <a class="ft-link" href="penaltis.html?estado=juego">penalti</a> ·
+              <a class="ft-link" href="penaltis.html?estado=gol">gol</a> ·
+              <a class="ft-link" href="penaltis.html?estado=parada">parada</a> ·
+              <a class="ft-link" href="penaltis.html?estado=resultado">resultado</a> ·
+              <a class="ft-link" href="penaltis.html?estado=jugado">ya jugado</a> ·
+              <a class="ft-link" href="penaltis.html?reiniciar=1">borrar partida guardada</a>
+            </p>
+          </footer>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="penaltis.data.js"></script>
+  <script src="penaltis.juego.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,3458 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <title>SPORT | Juegos · La tanda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- V4.4: color de la barra del navegador en Android y Safari -->
+  <meta name="theme-color" content="#060a14">
+  <!-- CSS: settings (SIEMPRE primero) -->
+  <link id="brandStyles-root" rel="stylesheet" href="../../../cds-statics/css/brands/sport/setting.css">
+  <!-- CSS: library multibrand -->
+  <link id="brandStyles" rel="stylesheet" href="../../../cds-statics/css/sport-index.css">
+  <!-- V4.8: marca SPORT (42DS · brands/sport) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2048%2048%27%3E%3Cpath%20fill-rule%3D%27evenodd%27%20fill%3D%27%23ec0918%27%20d%3D%27M24%200C10.7452%200%200%2010.7452%200%2024C0%2037.2548%2010.7452%2048%2024%2048C37.2548%2048%2048%2037.2548%2048%2024C48%2010.7452%2037.2548%200%2024%200ZM37.9518%2029.2285C37.9518%2036.1872%2031.731%2039.28%2022.9614%2039.28H10.563V30.9784H24.3006C25.4238%2030.9784%2025.9854%2030.5307%2025.9854%2029.8389C25.9854%2029.3506%2025.7262%2029.025%2025.2078%2028.8216C24.4734%2028.5367%2023.3502%2028.2925%2022.011%2028.0484C17.1726%2027.1531%209.87176%2025.7695%209.87176%2018.1597C9.87176%2011.6079%2015.5742%208.8%2023.4798%208.8H35.9214V17.1016H23.091C22.0974%2017.1016%2021.6222%2017.5086%2021.6222%2018.0783C21.6222%2019.0835%2023.0344%2019.3286%2025.0579%2019.6798C25.328%2019.7267%2025.609%2019.7754%2025.899%2019.8281C30.7374%2020.7234%2037.9518%2022.2698%2037.9518%2029.2285Z%27/%3E%3C/svg%3E">
+
+  <!-- CSS local del POC (V4 = V3 + mejoras de UX/UI). Todo lo custom va con prefijo .poc-
+       y tokens --poc-. Cambios V3 anotados con /* V3 */ y cambios V4 con /* V4 */. -->
+  <style>
+    :root {
+      --poc-penaltis-ancho: 520px;
+      --poc-penaltis-grada: var(--color-darkGrey);
+      --poc-penaltis-cesped: var(--color-cuatroencampo);
+      --poc-penaltis-cesped-claro: var(--color-cuatroencampo--light);
+      --poc-penaltis-linea: var(--color-white);
+      --poc-penaltis-red: var(--color-lightGrey);
+      --poc-penaltis-portero: var(--color-functional-warning);
+      --poc-penaltis-lanzador: var(--color-functional-info);
+      --poc-penaltis-piel: var(--color-illustrations-skin-5);
+      --poc-penaltis-ok: var(--color-functional-success);
+      --poc-penaltis-ko: var(--color-functional-error);
+      --poc-penaltis-foco: var(--color-black);
+      /* V2: superficie oscura del marcador y de la tarjeta de resultado */
+      --poc-penaltis-marcador: var(--color-black);
+      --poc-penaltis-marcador-texto: var(--color-white);
+      /* V2: ritmo vertical propio del juego, más corto que los helpers -md (60px) */
+      --poc-penaltis-hueco: 1.2rem;
+      --poc-penaltis-hueco-lg: 2.4rem;
+    }
+
+    .poc-fila {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    .poc-bloque {
+      max-width: var(--poc-penaltis-ancho);
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+
+    /* OVERRIDE: ft-org-game centra a sus hijos en columna y les deja el
+       ancho del contenido. Aquí el bloque de juego tiene que ocupar su ancho. */
+    .poc-juego.ft-org-game {
+      align-items: stretch;
+      margin-top: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    /* V2: los <p> del DS traen 25px de margen; dentro del POC el ritmo lo marca el bloque */
+    .poc-bloque p,
+    .poc-bloque p.ft-text { margin-top: 0; margin-bottom: 0; }
+
+    .poc-sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    h2[tabindex="-1"]:focus,
+    h1[tabindex="-1"]:focus { outline: none; }
+
+    /* ---------- V2: CABECERA compacta durante el juego ---------- */
+    .poc-cabecera { padding-bottom: var(--poc-penaltis-hueco-lg); }
+    .poc-cabecera__intro { padding-top: 0.4rem; }
+    body[data-poc-vista="juego"] .poc-cabecera { padding-bottom: var(--poc-penaltis-hueco); }
+    body[data-poc-vista="juego"] .poc-cabecera__intro { display: none; }
+
+    /* ---------- V2: MARCADOR tipo rótulo de TV ---------- */
+    .poc-marcador {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+      padding: 0.6rem 0.6rem 0.6rem 1.2rem;
+      border-radius: 999px;
+      background: var(--poc-penaltis-marcador);
+      color: var(--poc-penaltis-marcador-texto);
+      margin-bottom: var(--poc-penaltis-hueco);
+    }
+
+    .poc-marcador__resultado {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .poc-marcador__num {
+      font-family: var(--font-primary);
+      font-size: 2rem;
+      letter-spacing: 0;
+      min-width: 1.2ch;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 420px) {
+      .poc-marcador { gap: 0.8rem; padding-left: 1rem; }
+      .poc-marcador__resultado { gap: 0.4rem; font-size: 1.1rem; letter-spacing: 0.04em; }
+      .poc-marcador__num { font-size: 1.8rem; }
+      .poc-marcador .poc-tanda { gap: 0.4rem; }
+      .poc-marcador .poc-tanda__tiro { width: 2rem; height: 2rem; font-size: 1rem; }
+    }
+
+    .poc-marcador__num.is-sube { animation: poc-sube 0.5s cubic-bezier(.2, 1.6, .5, 1); }
+
+    @keyframes poc-sube {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+
+    /* ---------- MARCADOR DE LA TANDA (puntos) ---------- */
+    .poc-tanda {
+      display: flex;
+      gap: 0.6rem;
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+    }
+
+    .poc-tanda__tiro {
+      display: grid;
+      place-items: center;
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 50%;
+      border: 2px solid var(--color-mediumGrey);
+      background: var(--color-white);
+      color: var(--color-black);
+      font-size: 1.4rem;
+      line-height: 1;
+      font-weight: bold;
+    }
+
+    /* V2: sobre el marcador oscuro los pendientes son huecos, no discos blancos */
+    .poc-marcador .poc-tanda__tiro {
+      width: 2.4rem;
+      height: 2.4rem;
+      font-size: 1.2rem;
+      background: transparent;
+      border-color: var(--color-darkGrey);
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="actual"],
+    .poc-marcador .poc-tanda__tiro[data-poc-tiro="actual"] {
+      border-color: var(--color-black);
+      border-width: 3px;
+    }
+
+    .poc-marcador .poc-tanda__tiro[data-poc-tiro="actual"] {
+      border-color: var(--color-white);
+      animation: poc-latido 1.4s ease-in-out infinite;
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="gol"],
+    .poc-marcador .poc-tanda__tiro[data-poc-tiro="gol"] {
+      background: var(--poc-penaltis-ok);
+      border-color: var(--poc-penaltis-ok);
+    }
+
+    .poc-tanda__tiro[data-poc-tiro="parada"],
+    .poc-marcador .poc-tanda__tiro[data-poc-tiro="parada"] {
+      background: var(--poc-penaltis-ko);
+      border-color: var(--poc-penaltis-ko);
+    }
+
+    .poc-tanda--grande .poc-tanda__tiro {
+      width: 4.4rem;
+      height: 4.4rem;
+      font-size: 2rem;
+    }
+
+    /* ---------- V2: antetítulo "Penalti 2 de 5" ---------- */
+    .poc-antetitulo {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-black);
+      opacity: 0.7;
+      margin-bottom: 0.4rem;
+    }
+
+    .poc-pregunta { margin-bottom: var(--poc-penaltis-hueco); }
+
+    /* ---------- ESCENA ---------- */
+    .poc-escena {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--poc-penaltis-grada);
+      line-height: 0;
+      margin-bottom: var(--poc-penaltis-hueco);
+    }
+
+    .poc-escena svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .poc-escena .poc-grada { fill: var(--poc-penaltis-grada); }
+    .poc-escena .poc-grada-puntos { fill: var(--color-mediumGrey); opacity: 0.35; }
+    .poc-escena .poc-cesped { fill: var(--poc-penaltis-cesped); }
+    .poc-escena .poc-cesped-franja { fill: var(--poc-penaltis-cesped-claro); opacity: 0.25; }
+    .poc-escena .poc-linea { stroke: var(--poc-penaltis-linea); fill: none; stroke-width: 2; }
+    .poc-escena .poc-punto { fill: var(--poc-penaltis-linea); }
+    .poc-escena .poc-red { stroke: var(--poc-penaltis-red); stroke-width: 0.8; opacity: 0.55; }
+    .poc-escena .poc-poste { fill: var(--color-white); }
+
+    /* V2: la red se hunde desde el punto de impacto, no desde el larguero */
+    .poc-escena .poc-red-grupo { transform-box: view-box; }
+    .poc-escena .poc-grada-puntos { transform-box: fill-box; transform-origin: 50% 100%; }
+
+    .poc-escena .poc-diana circle {
+      fill: var(--color-white);
+      fill-opacity: 0.18;
+      stroke: var(--color-white);
+      stroke-width: 1.5;
+      stroke-dasharray: 3 3;
+      transition: fill-opacity 0.2s, stroke-width 0.2s;
+    }
+
+    .poc-escena .poc-diana text {
+      fill: var(--color-white);
+      font: bold 13px/1 var(--font-stack, sans-serif);
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .poc-escena .poc-diana.is-correcta text,
+    .poc-escena .poc-diana.is-fallada text { fill: var(--color-black); }
+
+    .poc-escena .poc-diana.is-apuntada circle {
+      fill-opacity: 0.45;
+      stroke-width: 3;
+      stroke-dasharray: none;
+    }
+
+    .poc-escena .poc-diana.is-correcta circle {
+      fill: var(--poc-penaltis-ok);
+      fill-opacity: 1;
+      stroke-dasharray: none;
+      stroke-width: 3;
+    }
+
+    .poc-escena .poc-diana.is-fallada circle {
+      fill: var(--poc-penaltis-ko);
+      fill-opacity: 1;
+      stroke-dasharray: none;
+    }
+
+    /* V2: trayectoria prevista al apuntar (hover / foco) */
+    .poc-escena .poc-trayectoria {
+      fill: none;
+      stroke: var(--color-white);
+      stroke-width: 2;
+      stroke-dasharray: 2 5;
+      stroke-linecap: round;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .poc-escena .poc-trayectoria.is-visible { opacity: 0.9; }
+
+    /* V2: onda en el punto de impacto */
+    .poc-escena .poc-impacto {
+      fill: none;
+      stroke: var(--color-white);
+      stroke-width: 3;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+    }
+
+    .poc-escena .poc-portero,
+    .poc-escena .poc-lanzador,
+    .poc-escena .poc-balon {
+      transform-box: fill-box;
+    }
+
+    .poc-escena .poc-portero { transform-origin: 50% 100%; }
+    .poc-escena .poc-lanzador { transform-origin: 50% 100%; }
+    .poc-escena .poc-balon { transform-origin: 50% 50%; }
+    /* V2: estela del balón, solo visible en vuelo */
+    .poc-escena .poc-balon--estela { opacity: 0; }
+
+    .poc-escena .poc-camiseta-portero { fill: var(--poc-penaltis-portero); }
+    .poc-escena .poc-camiseta-lanzador { fill: var(--poc-penaltis-lanzador); }
+    .poc-escena .poc-piel { fill: var(--poc-penaltis-piel); }
+    .poc-escena .poc-pantalon { fill: var(--color-black); }
+    .poc-escena .poc-guante { fill: var(--color-white); stroke: var(--color-black); stroke-width: 1; }
+    .poc-escena .poc-balon circle { fill: var(--color-white); stroke: var(--color-black); stroke-width: 1.2; }
+    .poc-escena .poc-balon path { fill: var(--color-black); }
+    .poc-escena .poc-sombra { fill: var(--color-black); opacity: 0.2; }
+
+    /* V2: destello de estadio en el gol */
+    .poc-destello {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--poc-destello-x, 50%) var(--poc-destello-y, 30%),
+          rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* V2: el rótulo va al césped, a la derecha del lanzador: no tapa ni al
+       jugador ni ninguna esquina de la portería. */
+    .poc-rotulo {
+      position: absolute;
+      right: 4%;
+      bottom: 7%;
+      padding: 0.5rem 1.4rem;
+      border-radius: 999px;
+      font-family: var(--font-primary);
+      font-size: 1.6rem;
+      line-height: 1.2;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-white);
+      background: var(--color-black);
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.6) rotate(-4deg);
+      transform-origin: 100% 100%;
+      transition: opacity 0.2s, transform 0.3s cubic-bezier(.2, 1.6, .5, 1);
+    }
+
+    .poc-rotulo.is-visible {
+      opacity: 1;
+      transform: scale(1) rotate(-4deg);
+    }
+
+    .poc-rotulo[data-poc-resultado="gol"],
+    .poc-rotulo[data-poc-resultado="parada"] { color: var(--color-black); }
+    .poc-rotulo[data-poc-resultado="gol"] { background: var(--poc-penaltis-ok); }
+    .poc-rotulo[data-poc-resultado="parada"] { background: var(--poc-penaltis-ko); }
+
+    @media (max-width: 420px) {
+      .poc-rotulo { font-size: 1.3rem; padding: 0.4rem 1rem; right: 3%; bottom: 5%; }
+    }
+
+    @media (min-width: 768px) {
+      .poc-rotulo { font-size: 2.2rem; }
+    }
+
+    /* ---------- V3: CAPA 3D sobre la escena SVG ---------- */
+    /* El SVG sigue en el flujo (fija el tamaño 360:260) y queda oculto
+       cuando el 3D está listo; así el layout no salta al cargar. */
+    .poc-escena3d {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: #070b14;
+    }
+
+    .poc-escena3d canvas { display: block; width: 100%; height: 100%; }
+    .poc-escena.is-3d .poc-escena3d { opacity: 1; }
+    .poc-escena.is-3d > svg { visibility: hidden; }
+    .poc-escena.is-3d .poc-destello { display: none; }
+    .poc-escena.is-3d { background: #070b14; }
+
+    /* franjas de cine durante la repetición */
+    .poc-escena3d::before,
+    .poc-escena3d::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: #000;
+      transition: height 0.3s ease;
+      z-index: 1;
+    }
+
+    .poc-escena3d::before { top: 0; }
+    .poc-escena3d::after { bottom: 0; }
+    .poc-escena.is-repeticion .poc-escena3d::before,
+    .poc-escena.is-repeticion .poc-escena3d::after { height: 9%; }
+
+    .poc-chip {
+      position: absolute;
+      top: 0.8rem;
+      left: 0.8rem;
+      z-index: 2;
+      margin: 0;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      font-size: 1.2rem;
+      line-height: 1.6;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-white);
+      background: rgba(0, 0, 0, 0.62);
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+    }
+
+    .poc-escena.is-cargando3d .poc-chip--carga { opacity: 1; }
+    .poc-escena.is-repeticion .poc-chip--repeticion { opacity: 1; top: calc(9% + 0.6rem); }
+    .poc-chip--repeticion::before { content: "● "; color: var(--poc-penaltis-ko); }
+
+    /* V3: el rótulo va por encima del lienzo */
+    .poc-rotulo { z-index: 2; }
+
+    /* Botón de sonido: dentro de la escena, fuera del aria-hidden */
+    .poc-sonido {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      width: 4.4rem;
+      height: 4.4rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.62);
+      color: var(--color-white);
+      cursor: pointer;
+    }
+
+    .poc-sonido[hidden] { display: none; }
+
+    .poc-sonido:focus-visible {
+      outline: 3px solid var(--color-white);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 6px var(--color-black);
+    }
+
+    .poc-sonido__icono {
+      width: 2rem;
+      height: 2rem;
+      background: currentColor;
+      /* altavoz tachado / con ondas, dibujado con máscara SVG en línea */
+      -webkit-mask: var(--poc-icono-sonido) center / contain no-repeat;
+      mask: var(--poc-icono-sonido) center / contain no-repeat;
+      --poc-icono-sonido: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5z' fill='black'/%3E%3Cpath d='m23 9-6 6M17 9l6 6'/%3E%3C/svg%3E");
+    }
+
+    .poc-sonido[aria-pressed="true"] .poc-sonido__icono {
+      --poc-icono-sonido: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5z' fill='black'/%3E%3Cpath d='M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14'/%3E%3C/svg%3E");
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-escena3d,
+      .poc-escena3d::before,
+      .poc-escena3d::after { transition: none; }
+    }
+
+    /* ---------- OPCIONES = ESQUINAS ---------- */
+    .poc-opciones {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+      border: 0;
+      margin-bottom: var(--poc-penaltis-hueco);
+    }
+
+    .poc-opcion {
+      appearance: none;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-height: 6.4rem;
+      width: 100%;
+      margin: 0;
+      padding: 0.8rem 1rem;
+      border: 2px solid var(--color-mediumGrey);
+      border-radius: 10px;
+      background: var(--color-white);
+      color: var(--color-black);
+      font: inherit;
+      font-size: 1.6rem;
+      font-weight: bold;
+      line-height: 1.25;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s, transform 0.1s, opacity 0.2s;
+    }
+
+    .poc-opcion[data-poc-esquina="A"],
+    .poc-opcion[data-poc-esquina="B"] { align-items: flex-start; }
+    .poc-opcion[data-poc-esquina="C"],
+    .poc-opcion[data-poc-esquina="D"] { align-items: flex-end; }
+    .poc-opcion[data-poc-esquina="B"],
+    .poc-opcion[data-poc-esquina="D"] { flex-direction: row-reverse; text-align: right; }
+
+    @media (hover: hover) {
+      .poc-opcion:hover:not([aria-disabled="true"]) {
+        border-color: var(--color-black);
+        background: var(--color-lightGrey);
+      }
+    }
+
+    .poc-opcion:active:not([aria-disabled="true"]) { transform: scale(0.98); }
+
+    .poc-opcion:focus-visible {
+      outline: 3px solid var(--poc-penaltis-foco);
+      outline-offset: 2px;
+    }
+
+    .poc-opcion[aria-disabled="true"] { cursor: default; }
+
+    .poc-opcion__letra {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 50%;
+      background: var(--color-black);
+      color: var(--color-white);
+      font-weight: bold;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .poc-opcion__texto { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; hyphens: auto; padding-top: 0.4rem; padding-bottom: 0.4rem; }
+
+    /* V2: el estado tras el tiro es una insignia ✓ / ✕ pegada a la letra,
+       no una segunda línea de texto que descuadra el botón en móvil. */
+    .poc-opcion__letra { position: relative; }
+
+    .poc-opcion__icono {
+      position: absolute;
+      top: -0.6rem;
+      right: -0.6rem;
+      display: grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 50%;
+      border: 2px solid var(--color-white);
+      font-size: 1rem;
+      line-height: 1;
+      color: var(--color-black);
+    }
+
+    .poc-opcion.is-correcta {
+      border-color: var(--poc-penaltis-ok);
+      border-width: 3px;
+      padding: 0.7rem 0.9rem;
+    }
+    .poc-opcion.is-correcta .poc-opcion__letra,
+    .poc-opcion.is-correcta .poc-opcion__icono { background: var(--poc-penaltis-ok); color: var(--color-black); }
+    .poc-opcion.is-fallada {
+      border-color: var(--poc-penaltis-ko);
+      border-width: 3px;
+      padding: 0.7rem 0.9rem;
+    }
+    .poc-opcion.is-fallada .poc-opcion__letra,
+    .poc-opcion.is-fallada .poc-opcion__icono { background: var(--poc-penaltis-ko); color: var(--color-black); }
+    .poc-opcion.is-apagada { opacity: 0.45; }
+
+    /* ---------- VEREDICTO: solo el dato ---------- */
+    .poc-veredicto {
+      border-left: 4px solid var(--color-mediumGrey);
+      padding: 0.2rem 0 0.2rem 1.2rem;
+      margin-bottom: var(--poc-penaltis-hueco);
+      color: var(--color-black);
+    }
+
+    .poc-veredicto[data-poc-resultado="gol"] { border-color: var(--poc-penaltis-ok); }
+    .poc-veredicto[data-poc-resultado="parada"] { border-color: var(--poc-penaltis-ko); }
+
+    .poc-veredicto__titulo {
+      font-weight: bold;
+      padding-bottom: 0.2rem;
+    }
+
+    /* V2: el siguiente penalti se queda pegado abajo: nunca hace falta hacer
+       scroll para seguir y el foco no desplaza la página. */
+    .poc-acciones {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .poc-acciones--pegajosa {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      padding-top: 1.6rem;
+      padding-bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, var(--color-white) 65%, rgba(255, 255, 255, 0));
+    }
+
+    .poc-acciones--pegajosa[hidden] { display: none; }
+
+    .poc-acciones--pegajosa .ft-btn { min-width: 22rem; }
+
+    .poc-ayuda-teclado {
+      text-align: center;
+      color: var(--color-black);
+      opacity: 0.75;
+    }
+
+    /* V2: la ayuda de teclado no se enseña en pantallas táctiles */
+    @media (hover: none) and (pointer: coarse) {
+      .poc-ayuda-teclado { display: none; }
+    }
+
+    kbd {
+      font: inherit;
+      font-weight: bold;
+      padding: 0 0.4rem;
+      border: 1px solid var(--color-mediumGrey);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+    }
+
+    /* ---------- V2: ENTRADA con mini portería ---------- */
+    .poc-esquema {
+      display: block;
+      width: 100%;
+      max-width: 26rem;
+      height: auto;
+      margin: 0 auto var(--poc-penaltis-hueco-lg);
+      border-radius: 10px;
+    }
+
+    .poc-esquema .poc-esquema__cesped { fill: var(--poc-penaltis-cesped); }
+    .poc-esquema .poc-esquema__grada { fill: var(--poc-penaltis-grada); }
+    .poc-esquema .poc-esquema__poste { fill: var(--color-white); }
+    .poc-esquema .poc-esquema__red { stroke: var(--poc-penaltis-red); stroke-width: 0.8; opacity: 0.5; }
+    .poc-esquema circle { fill: var(--color-white); fill-opacity: 0.18; stroke: var(--color-white); stroke-width: 1.5; stroke-dasharray: 3 3; }
+    .poc-esquema text { fill: var(--color-white); font: bold 13px/1 var(--font-stack, sans-serif); text-anchor: middle; dominant-baseline: central; }
+
+    .poc-entrada__texto { padding-bottom: var(--poc-penaltis-hueco-lg); }
+
+    .poc-progreso {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 1.2rem;
+      margin-bottom: var(--poc-penaltis-hueco-lg);
+      border-radius: 10px;
+      background: var(--color-lightGrey);
+      text-align: center;
+    }
+
+    /* ---------- V2: RESULTADO ---------- */
+    .poc-tarjeta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 2.4rem 1.6rem;
+      margin-bottom: var(--poc-penaltis-hueco);
+      border-radius: 16px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 24px, rgba(255, 255, 255, 0) 24px 48px),
+        var(--poc-penaltis-marcador);
+      color: var(--poc-penaltis-marcador-texto);
+      text-align: center;
+    }
+
+    .poc-tarjeta__antetitulo {
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .poc-tarjeta__marcador {
+      font-family: var(--font-primary);
+      font-size: 6.4rem;
+      line-height: 1;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      color: var(--poc-penaltis-marcador-texto);
+    }
+
+    .poc-tarjeta__marcador small {
+      font-size: 0.45em;
+      opacity: 0.7;
+    }
+
+    .poc-tarjeta__frase { font-size: 1.8rem; }
+
+    .poc-tarjeta .poc-tanda__tiro[data-poc-tiro="pendiente"] {
+      background: transparent;
+      border-color: var(--color-darkGrey);
+    }
+
+    /* El h2 del DS trae padding inferior: en la tarjeta manda el gap */
+    .poc-tarjeta .poc-tarjeta__marcador { margin: 0; padding: 0; }
+
+    .poc-compartir-estado { min-height: 2.2rem; text-align: center; margin-top: 0.6rem; }
+
+    .poc-compartir-salida {
+      width: 100%;
+      min-height: 8rem;
+      resize: none;
+      font-family: monospace;
+      font-size: 1.4rem;
+      border: 2px solid var(--color-mediumGrey);
+      border-radius: 4px;
+      padding: 0.8rem;
+      margin-top: 0.8rem;
+      background: var(--color-white);
+      color: var(--color-black);
+    }
+
+    .poc-repaso-plegable {
+      border-top: 1px solid var(--color-mediumGrey);
+      border-bottom: 1px solid var(--color-mediumGrey);
+      margin-top: var(--poc-penaltis-hueco-lg);
+      margin-bottom: var(--poc-penaltis-hueco-lg);
+    }
+
+    .poc-repaso-plegable summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.4rem 0;
+      font-weight: bold;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .poc-repaso-plegable summary .poc-resumen { display: block; font-size: 1.4rem; font-weight: normal; opacity: 0.75; }
+
+    .poc-repaso-plegable summary::-webkit-details-marker { display: none; }
+    .poc-repaso-plegable summary::after { content: "+"; font-size: 2.2rem; line-height: 1; }
+    .poc-repaso-plegable[open] summary::after { content: "−"; }
+
+    .poc-repaso-plegable summary:focus-visible {
+      outline: 3px solid var(--poc-penaltis-foco);
+      outline-offset: 2px;
+    }
+
+    .poc-repaso {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 1.2rem;
+    }
+
+    .poc-repaso li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.4rem 1rem;
+      padding: 1rem 0;
+      border-top: 1px solid var(--color-lightGrey);
+    }
+
+    .poc-repaso li:first-child { border-top: 0; }
+
+    .poc-repaso__marca {
+      grid-row: span 2;
+      display: grid;
+      place-items: center;
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 50%;
+      font-weight: bold;
+      color: var(--color-black);
+    }
+
+    .poc-repaso__marca[data-poc-resultado="gol"] { background: var(--poc-penaltis-ok); }
+    .poc-repaso__marca[data-poc-resultado="parada"] { background: var(--poc-penaltis-ko); }
+
+    .poc-repaso__respuesta { font-size: 1.5rem; }
+
+    .poc-proxima { text-align: center; }
+
+    /* ---------- CARGANDO ---------- */
+    .poc-esqueleto {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .poc-esqueleto span {
+      display: block;
+      border-radius: 10px;
+      background: var(--color-lightGrey);
+      animation: poc-latido 1.4s ease-in-out infinite;
+    }
+
+    .poc-esqueleto__marcador { height: 3.6rem; border-radius: 999px !important; }
+    .poc-esqueleto__escena { aspect-ratio: 360 / 260; }
+    .poc-esqueleto__opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .poc-esqueleto__opciones span { height: 6.4rem; }
+
+    @keyframes poc-latido {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .poc-pie a {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    /* V4: en V3 este bloque tenía un @media (max-width: 420px) pegado dentro
+       de la lista de selectores. El navegador descartaba esa regla entera, así
+       que el esqueleto y el latido del tiro actual seguían animándose con
+       «reducir movimiento» activado. */
+    @media (prefers-reduced-motion: reduce) {
+      .poc-esqueleto span,
+      .poc-marcador .poc-tanda__tiro[data-poc-tiro="actual"],
+      .poc-estado-tiro::before { animation: none; }
+
+      .poc-marcador__num.is-sube { animation: none; }
+      .poc-rotulo,
+      .poc-opcion,
+      .poc-escena .poc-trayectoria,
+      .poc-escena .poc-diana circle { transition: none; }
+    }
+
+    /* ==========================================================
+       V3 · UI «ESTADIO DE NOCHE» (2026-09-25)
+       El juego adopta el tema oscuro del DS (data-theme="dark", que
+       reasigna --color-black/white/greys y --color-primary) y una paleta
+       propia de noche de partido: la interfaz y la escena 3D son una pieza.
+       Los colores sobre verde/rojo funcionales siguen en tinta oscura.
+       ========================================================== */
+    :root {
+      --poc-noche: #0a1020;
+      --poc-noche-2: #121b30;
+      --poc-noche-3: #1b2742;
+      --poc-linea: rgba(255, 255, 255, 0.12);
+      --poc-linea-2: rgba(255, 255, 255, 0.24);
+      --poc-texto: #eef2f8;
+      --poc-texto-2: #aab4c8;
+      --poc-acento: #f7c948; /* luz de foco: CTA, foco y antetítulos */
+      --poc-acento-2: #ffd966;
+      --poc-tinta: #0b0f19; /* texto sobre verde, rojo y amarillo */
+      --poc-cesped-tarjeta: #1d6a2e;
+      --poc-cesped-tarjeta-2: #124620;
+    }
+
+    .poc-estadio {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2.8rem 3.2rem 3.2rem;
+      border-radius: 22px;
+      color: var(--poc-texto);
+      background:
+        radial-gradient(120% 55% at 50% -12%, rgba(247, 201, 72, 0.16), rgba(247, 201, 72, 0) 62%),
+        radial-gradient(90% 45% at 50% 115%, rgba(55, 138, 58, 0.26), rgba(55, 138, 58, 0) 70%),
+        var(--poc-noche);
+      box-shadow: 0 30px 60px -32px rgba(10, 16, 32, 0.7);
+      isolation: isolate;
+    }
+
+    .poc-estadio .poc-bloque { max-width: none; }
+
+    /* En móvil el estadio ocupa todo el ancho: más escena, menos marco */
+    @media (max-width: 600px) {
+      .poc-estadio {
+        width: 100vw;
+        max-width: none;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        padding: 2.4rem 1.6rem 2.8rem;
+        border-radius: 0;
+      }
+    }
+
+    .poc-estadio .ft-title,
+    .poc-estadio h2,
+    .poc-estadio h3,
+    .poc-estadio summary { color: var(--poc-texto); }
+    .poc-estadio .ft-text,
+    .poc-estadio p,
+    .poc-estadio li { color: inherit; }
+    .poc-estadio .ft-link { color: var(--poc-texto); }
+
+    .poc-eyebrow,
+    .poc-estadio .poc-antetitulo {
+      display: block;
+      margin-bottom: 0.6rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--poc-acento);
+      opacity: 1;
+    }
+
+    /* CTA principal con luz de foco. OVERRIDE: .ft-btn--primary en oscuro
+       sería gris claro; en el estadio el único CTA de cada pantalla es amarillo. */
+    .poc-estadio .ft-btn--primary,
+    .poc-estadio .ft-btn--primary:active {
+      background: var(--poc-acento);
+      border-color: var(--poc-acento);
+      color: var(--poc-tinta);
+      background-image: none;
+    }
+
+    .poc-estadio .ft-btn--primary:hover {
+      background: var(--poc-acento-2);
+      border-color: var(--poc-acento-2);
+      color: var(--poc-tinta);
+      background-image: none;
+    }
+
+    .poc-estadio .ft-btn--primary:focus-visible {
+      background: var(--poc-acento);
+      color: var(--poc-tinta);
+      outline: 3px solid var(--poc-texto);
+      outline-offset: 3px;
+    }
+
+    .poc-estadio .poc-acciones .ft-btn { min-width: 24rem; }
+
+    @media (max-width: 600px) {
+      .poc-estadio .poc-acciones .ft-btn { width: 100%; min-width: 0; }
+    }
+
+    .poc-estadio .poc-ayuda-teclado { color: var(--poc-texto-2); opacity: 1; }
+    .poc-estadio kbd { color: var(--poc-texto); background: var(--poc-noche-2); border-color: var(--poc-linea-2); }
+
+    /* ---- Entrada ---- */
+    .poc-entrada__titulo {
+      margin: 0 0 2rem;
+      padding: 0;
+      font-family: var(--font-primary);
+      font-size: 4.4rem;
+      line-height: 1;
+    }
+
+    .poc-entrada__fecha {
+      display: block;
+      margin-top: 0.8rem;
+      font-family: var(--font-stack);
+      font-size: 1.6rem;
+      font-weight: normal;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-estadio .poc-esquema {
+      max-width: none;
+      border-radius: 14px;
+      box-shadow: 0 0 0 1px var(--poc-linea);
+      margin-bottom: 1.6rem;
+    }
+
+    .poc-esquema .poc-esquema__red { stroke: #fff; stroke-width: 0.7; opacity: 0.28; fill: none; }
+    .poc-esquema .poc-esquema__arcos path { fill: none; stroke: #fff; stroke-width: 1.4; stroke-dasharray: 2 5; stroke-linecap: round; opacity: 0.7; }
+    .poc-esquema .poc-esquema__dianas circle { fill: #fff; fill-opacity: 0.16; stroke: var(--poc-acento); stroke-width: 1.8; stroke-dasharray: 3 3; }
+    .poc-esquema .poc-esquema__dianas text { fill: #fff; font: bold 13px/1 var(--font-stack, sans-serif); text-anchor: middle; dominant-baseline: central; }
+
+    .poc-reglas {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin: 0 0 2rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .poc-reglas li {
+      padding: 1rem 0.6rem;
+      border: 1px solid var(--poc-linea);
+      border-radius: 12px;
+      background: var(--poc-noche-2);
+      text-align: center;
+      font-size: 1.3rem;
+      letter-spacing: 0.04em;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-reglas strong {
+      display: block;
+      font-family: var(--font-primary);
+      font-size: 2.8rem;
+      line-height: 1.1;
+      color: var(--poc-texto);
+    }
+
+    .poc-estadio .poc-entrada__texto { color: var(--poc-texto-2); }
+
+    .poc-estadio .poc-progreso {
+      background: var(--poc-noche-2);
+      border: 1px solid var(--poc-linea);
+      color: var(--poc-texto);
+    }
+
+    /* ---- Juego ---- */
+    .poc-estadio .poc-marcador {
+      background: var(--poc-noche-2);
+      border: 1px solid var(--poc-linea);
+      color: var(--poc-texto);
+    }
+
+    .poc-estadio .poc-tanda__tiro { color: var(--poc-tinta); }
+
+    .poc-estadio .poc-tanda__tiro[data-poc-tiro="pendiente"] {
+      background: transparent;
+      border-color: var(--poc-linea-2);
+    }
+
+    .poc-estadio .poc-tanda__tiro[data-poc-tiro="actual"] {
+      background: transparent;
+      border-color: var(--poc-acento);
+    }
+
+    .poc-estadio .poc-marcador .poc-tanda__tiro[data-poc-tiro="pendiente"] {
+      background: transparent;
+      border-color: var(--poc-linea-2);
+    }
+
+    .poc-estadio .poc-marcador .poc-tanda__tiro[data-poc-tiro="actual"] {
+      background: transparent;
+      border-color: var(--poc-acento);
+    }
+
+    .poc-estadio .poc-pregunta { color: var(--poc-texto); }
+
+    @media (min-width: 768px) {
+      .poc-estadio .poc-pregunta #poc-pregunta-texto { font-size: 2.4rem; line-height: 1.2; }
+    }
+
+    /* La ilustración SVG (reserva sin 3D) conserva sus colores de día:
+       el tema oscuro del DS no debe invertir postes, red ni jugadores. */
+    .poc-estadio .poc-escena > svg {
+      --color-white: #fff;
+      --color-black: #111;
+      --color-lightGrey: #f2f2f2;
+      --color-mediumGrey: #ccc;
+      --color-darkGrey: #999;
+    }
+
+    .poc-estadio .poc-escena {
+      border-radius: 14px;
+      box-shadow: 0 0 0 1px var(--poc-linea), 0 18px 40px -20px rgba(0, 0, 0, 0.9);
+    }
+
+    .poc-estadio .poc-opcion {
+      background: var(--poc-noche-2);
+      border: 1px solid var(--poc-linea);
+      border-radius: 12px;
+      color: var(--poc-texto);
+      padding: 0.9rem 1.1rem;
+    }
+
+    @media (hover: hover) {
+      .poc-estadio .poc-opcion:hover:not([aria-disabled="true"]) {
+        background: var(--poc-noche-3);
+        border-color: var(--poc-acento);
+      }
+    }
+
+    .poc-estadio .poc-opcion:focus-visible {
+      outline: 3px solid var(--poc-acento);
+      outline-offset: 2px;
+    }
+
+    .poc-estadio .poc-opcion__letra { background: var(--poc-texto); color: var(--poc-tinta); }
+
+    .poc-estadio .poc-opcion.is-correcta {
+      border: 2px solid var(--poc-penaltis-ok);
+      background: rgba(0, 189, 62, 0.14);
+      padding: 0.8rem 1rem;
+    }
+
+    .poc-estadio .poc-opcion.is-fallada {
+      border: 2px solid var(--poc-penaltis-ko);
+      background: rgba(253, 55, 0, 0.14);
+      padding: 0.8rem 1rem;
+    }
+
+    .poc-estadio .poc-opcion.is-correcta .poc-opcion__letra,
+    .poc-estadio .poc-opcion.is-fallada .poc-opcion__letra,
+    .poc-estadio .poc-opcion__icono { color: var(--poc-tinta); }
+    .poc-estadio .poc-opcion__icono { border-color: var(--poc-noche); }
+    .poc-estadio .poc-opcion.is-apagada { opacity: 0.4; }
+
+    .poc-estadio .poc-veredicto {
+      padding: 1.2rem 1.4rem;
+      border-radius: 0 12px 12px 0;
+      background: var(--poc-noche-2);
+      color: var(--poc-texto);
+    }
+
+    .poc-estadio .poc-veredicto__titulo { color: var(--poc-texto); }
+
+    .poc-estadio .poc-acciones--pegajosa {
+      background: linear-gradient(to top, var(--poc-noche) 62%, rgba(10, 16, 32, 0));
+    }
+
+    .poc-estadio .poc-rotulo[data-poc-resultado] { color: var(--poc-tinta); }
+
+    /* ---- Resultado: grafismo de final de partido ---- */
+    .poc-estadio .poc-tarjeta {
+      gap: 1rem;
+      padding: 2.4rem 1.6rem 2.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background:
+        radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 70%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 28px, rgba(255, 255, 255, 0) 28px 56px),
+        linear-gradient(180deg, var(--poc-cesped-tarjeta), var(--poc-cesped-tarjeta-2));
+      color: #fff;
+      box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.9);
+    }
+
+    .poc-tarjeta__final {
+      padding: 0.2rem 1rem;
+      border-radius: 999px;
+      background: var(--poc-texto);
+      color: var(--poc-tinta) !important;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .poc-estadio .poc-tarjeta__antetitulo { color: rgba(255, 255, 255, 0.85); }
+    .poc-estadio .poc-tarjeta__marcador { color: #fff; }
+
+    .poc-tarjeta__resultado {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+    }
+
+    .poc-tarjeta__equipo {
+      font-family: var(--font-stack);
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .poc-tarjeta__goles { font-size: 6.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+    .poc-tarjeta__guion { font-size: 4rem; line-height: 1; opacity: 0.6; }
+
+    @media (max-width: 420px) {
+      .poc-tarjeta__goles { font-size: 5.2rem; }
+      .poc-tarjeta__resultado { gap: 0.8rem; }
+    }
+
+    .poc-estadio .poc-tarjeta .poc-tanda__tiro { border-color: rgba(0, 0, 0, 0.25); }
+    .poc-estadio .poc-tarjeta__frase { color: #fff; }
+
+    .poc-estadio #poc-resultado-previo,
+    .poc-estadio .poc-compartir-estado { color: var(--poc-texto-2); text-align: center; }
+
+    .poc-estadio .poc-repaso-plegable { border-color: var(--poc-linea); }
+    .poc-estadio .poc-repaso li { border-top-color: var(--poc-linea); }
+    .poc-estadio .poc-repaso__respuesta { color: var(--poc-texto-2); }
+    .poc-estadio .poc-repaso__respuesta strong { color: var(--poc-texto); }
+    .poc-estadio .poc-repaso-plegable summary:focus-visible { outline-color: var(--poc-acento); }
+
+    .poc-estadio .poc-proxima {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.4rem 1.2rem;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-estadio .poc-compartir-salida { background: var(--poc-noche-2); color: var(--poc-texto); border-color: var(--poc-linea-2); }
+
+    /* ---- Carga, error y vacío en el estadio ---- */
+    .poc-estadio .poc-esqueleto span { background: var(--poc-noche-2); }
+    .poc-estadio .ft-mol-advice { border-color: var(--poc-linea); }
+    .poc-estadio .ft-mol-advice__title { color: var(--poc-acento); }
+
+    /* ---- Pie de revisión: fuera del producto, discreto ---- */
+    .poc-pie {
+      max-width: 600px;
+      padding-top: 1.6rem;
+      border-top: 1px dashed var(--color-mediumGrey);
+      opacity: 0.85;
+    }
+
+    .poc-pie__etiqueta {
+      display: inline-block;
+      margin-right: 0.4rem;
+      padding: 0 0.6rem;
+      border-radius: 4px;
+      background: var(--color-lightGrey);
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ---- Escritorio ancho: escena grande a la izquierda, juego a la derecha.
+       Todo el penalti (marcador, escena, pregunta, respuestas y veredicto)
+       cabe en una pantalla de portátil sin hacer scroll. ---- */
+    @media (min-width: 1024px) {
+      .poc-cabecera,
+      .poc-pie { max-width: 1040px; }
+
+      .poc-estadio {
+        max-width: 1040px;
+        padding: 3.2rem 3.6rem 3.6rem;
+      }
+
+      .poc-estadio > section:not(#poc-vista-juego):not(#poc-vista-entrada) {
+        max-width: 560px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #poc-vista-juego.poc-juego {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto auto auto auto 1fr;
+        grid-template-areas:
+          "marcador marcador"
+          "escena pregunta"
+          "escena reloj"
+          "escena opciones"
+          "escena veredicto"
+          "escena ayuda"
+          "escena acciones"
+          "escena .";
+        column-gap: 2.8rem;
+        align-items: start;
+      }
+
+      #poc-vista-juego[hidden],
+      #poc-vista-entrada[hidden] { display: none; }
+
+      #poc-vista-juego .poc-marcador { grid-area: marcador; margin-bottom: 2rem; }
+      #poc-vista-juego .poc-pregunta { grid-area: pregunta; }
+      #poc-vista-juego #poc-escena { grid-area: escena; margin-bottom: 0; }
+      #poc-vista-juego .poc-opciones { grid-area: opciones; }
+      #poc-vista-juego .poc-reloj { grid-area: reloj; }
+      #poc-vista-juego .poc-veredicto { grid-area: veredicto; }
+      #poc-vista-juego #poc-ayuda-teclado { grid-area: ayuda; text-align: left; }
+      #poc-vista-juego #poc-estado-tiro { grid-area: ayuda; }
+      #poc-vista-juego #poc-acciones-juego { grid-area: acciones; }
+
+      .poc-estadio .poc-acciones--pegajosa {
+        position: static;
+        padding: 0;
+        background: none;
+        justify-content: stretch;
+      }
+
+      .poc-estadio .poc-acciones--pegajosa .ft-btn { width: 100%; min-width: 0; }
+
+      #poc-vista-entrada {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        column-gap: 3.6rem;
+        align-content: center;
+      }
+
+      #poc-vista-entrada > * { grid-column: 2; }
+      #poc-vista-entrada > .poc-esquema { grid-column: 1; grid-row: 1 / span 9; align-self: center; margin: 0; }
+      .poc-estadio #poc-vista-entrada .poc-acciones { justify-content: flex-start; }
+      .poc-estadio #poc-vista-entrada .poc-ayuda-teclado { text-align: left; }
+      .poc-estadio #poc-vista-entrada .poc-progreso { align-items: flex-start; text-align: left; }
+    }
+
+    /* ==========================================================
+       V4 · UX/UI (2026-09-25)
+       ========================================================== */
+
+    /* ---- Respuestas: rejilla regular, sin guiones a mitad de palabra ----
+       Las cuatro tarjetas miden lo mismo (fila 1fr) y el texto va centrado
+       en vertical. La columna ya dice izquierda/derecha y la fila
+       arriba/abajo; la letra se queda en el lado de su esquina. */
+    .poc-estadio .poc-opciones { grid-auto-rows: 1fr; }
+    .poc-estadio .poc-opcion[data-poc-esquina] { align-items: center; }
+    .poc-estadio .poc-opcion__texto {
+      hyphens: manual;
+      -webkit-hyphens: manual;
+      overflow-wrap: break-word;
+      text-wrap: balance;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    /* La elegida se queda encendida mientras vuela el balón */
+    .poc-estadio .poc-opcion.is-elegida {
+      border-color: var(--poc-acento);
+      box-shadow: 0 0 0 1px var(--poc-acento), 0 0 24px -6px rgba(247, 201, 72, 0.55);
+    }
+
+    .poc-estadio .poc-opcion.is-elegida .poc-opcion__letra { background: var(--poc-acento); }
+
+    /* ---- Insignia ✓/✕ en la esquina del botón que corresponde a la de
+       la portería: A arriba-izquierda, B arriba-derecha, C abajo-izquierda,
+       D abajo-derecha. Ya no tapa la letra. ---- */
+    .poc-estadio .poc-opcion .poc-opcion__icono {
+      top: auto;
+      right: auto;
+      bottom: auto;
+      left: auto;
+      z-index: 1;
+      width: 2.4rem;
+      height: 2.4rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-width: 3px;
+    }
+
+    .poc-estadio .poc-opcion[data-poc-esquina="A"] .poc-opcion__icono { top: -1rem; left: -1rem; }
+    .poc-estadio .poc-opcion[data-poc-esquina="B"] .poc-opcion__icono { top: -1rem; right: -1rem; }
+    .poc-estadio .poc-opcion[data-poc-esquina="C"] .poc-opcion__icono { bottom: -1rem; left: -1rem; }
+    .poc-estadio .poc-opcion[data-poc-esquina="D"] .poc-opcion__icono { bottom: -1rem; right: -1rem; }
+    .poc-estadio .poc-opcion.is-correcta .poc-opcion__icono { background: var(--poc-penaltis-ok); }
+    .poc-estadio .poc-opcion.is-fallada .poc-opcion__icono { background: var(--poc-penaltis-ko); }
+
+    /* ---- Dianas de la ilustración SVG: aro amarillo, como en la entrada ---- */
+    .poc-estadio .poc-escena .poc-diana circle {
+      fill: #0a1020;
+      fill-opacity: 0.55;
+      stroke: var(--poc-acento);
+      stroke-width: 2;
+    }
+
+    .poc-estadio .poc-escena .poc-diana.is-apuntada circle { fill-opacity: 0.8; stroke-width: 3; }
+    .poc-estadio .poc-escena .poc-diana.is-correcta circle { fill: var(--poc-penaltis-ok); fill-opacity: 1; stroke: var(--poc-penaltis-ok); }
+    .poc-estadio .poc-escena .poc-diana.is-fallada circle { fill: var(--poc-penaltis-ko); fill-opacity: 1; stroke: var(--poc-penaltis-ko); }
+
+    /* ---- Estado del tiro: el panel dice qué pasa mientras vuela el balón ---- */
+    .poc-estado-tiro {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 0 0 var(--poc-penaltis-hueco);
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--poc-texto);
+    }
+
+    .poc-estado-tiro[hidden] { display: none; }
+
+    .poc-estado-tiro::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+      background: var(--poc-acento);
+      box-shadow: 0 0 0 4px rgba(247, 201, 72, 0.22);
+      animation: poc-latido 0.9s ease-in-out infinite;
+    }
+
+    /* ---- Veredicto: entra sin empujar de golpe ---- */
+    .poc-estadio .poc-veredicto:not([hidden]),
+    .poc-estadio .poc-acciones--pegajosa:not([hidden]) {
+      animation: poc-entra 0.28s ease-out both;
+    }
+
+    @keyframes poc-entra {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* ---- Entrada: fecha en el antetítulo y cifras del jugador ---- */
+    .poc-entrada__titulo { margin-bottom: 1.6rem; }
+
+    .poc-reglas li[data-poc-destacado] {
+      border-color: rgba(247, 201, 72, 0.55);
+      background:
+        radial-gradient(120% 90% at 50% 0%, rgba(247, 201, 72, 0.16), rgba(247, 201, 72, 0) 70%),
+        var(--poc-noche-2);
+    }
+
+    .poc-reglas li[data-poc-destacado] strong { color: var(--poc-acento); }
+    .poc-reglas li[data-poc-destacado] strong::before { content: "🔥 "; font-size: 0.7em; vertical-align: 0.15em; }
+
+    .poc-racha-nota {
+      margin: -0.8rem 0 1.6rem;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      border: 1px solid rgba(247, 201, 72, 0.35);
+      background: rgba(247, 201, 72, 0.08);
+      font-size: 1.4rem;
+      color: var(--poc-texto);
+    }
+
+    .poc-racha-nota[hidden] { display: none; }
+
+    /* ---- Resultado: cifras del jugador bajo la tarjeta ---- */
+    .poc-reglas--resultado { margin: 1.6rem 0 0.4rem; }
+
+    .poc-resultado-nota {
+      margin: 0 0 1.2rem;
+      text-align: center;
+      font-weight: bold;
+      color: var(--poc-acento);
+    }
+
+    .poc-resultado-nota[hidden] { display: none; }
+
+    .poc-estadio #poc-vista-resultado > .poc-acciones { margin-top: 1.6rem; }
+
+    .poc-estadio .ft-btn[data-poc-hecho] {
+      background: var(--poc-penaltis-ok);
+      border-color: var(--poc-penaltis-ok);
+    }
+
+    /* ---- Pie: aviso de entorno (solo revisión) ---- */
+    .poc-aviso-ds {
+      margin-top: 0.8rem !important;
+      padding: 0.6rem 1rem;
+      border-left: 3px solid var(--color-functional-warning, #f5a623);
+      background: var(--color-lightGrey);
+    }
+
+    .poc-aviso-ds[hidden] { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-estadio .poc-veredicto:not([hidden]),
+      .poc-estadio .poc-acciones--pegajosa:not([hidden]) { animation: none; }
+    }
+
+    /* ==========================================================
+       V4.1 · RELOJ, PUNTOS Y RANKING (2026-09-25)
+       ========================================================== */
+
+    /* ---- Reloj: barra que se vacía + segundos. Amarillo; rojo en los 3 últimos ---- */
+    .poc-reloj {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 0 0 var(--poc-penaltis-hueco);
+      color: var(--poc-texto);
+      --poc-reloj-color: var(--poc-acento);
+    }
+
+    .poc-reloj__icono {
+      flex: 0 0 auto;
+      width: 1.8rem;
+      height: 1.8rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .poc-reloj__pista {
+      position: relative;
+      flex: 1 1 auto;
+      height: 0.8rem;
+      border-radius: 999px;
+      background: var(--poc-noche-3);
+      overflow: hidden;
+    }
+
+    .poc-reloj__barra {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--poc-reloj-color);
+      transform-origin: 0 50%;
+      transition: transform 0.1s linear, background-color 0.2s;
+    }
+
+    .poc-reloj__num {
+      flex: 0 0 auto;
+      min-width: 4.2rem;
+      text-align: right;
+      font-family: var(--font-primary);
+      font-size: 1.8rem;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .poc-reloj[data-poc-urgente="true"] { --poc-reloj-color: var(--poc-penaltis-ko); }
+    .poc-reloj[data-poc-urgente="true"] .poc-reloj__num { color: var(--poc-penaltis-ko); animation: poc-latido 0.5s ease-in-out infinite; }
+    .poc-reloj[data-poc-estado] { opacity: 0.5; }
+    .poc-reloj[data-poc-estado] .poc-reloj__num { animation: none; }
+    .poc-reloj[data-poc-estado="agotado"] { opacity: 1; }
+
+    /* ---- Veredicto: puntos del tiro ---- */
+    .poc-veredicto__puntos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.4rem 1.2rem;
+      margin-top: 0.8rem !important;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--poc-linea);
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--poc-texto);
+    }
+
+    .poc-veredicto[data-poc-resultado="gol"] #poc-veredicto-puntos { color: var(--poc-acento); }
+    .poc-veredicto__llevas { font-weight: normal; color: var(--poc-texto-2); }
+
+    /* ---- Resultado: puntos en la tarjeta ---- */
+    .poc-tarjeta__puntos {
+      padding: 0.2rem 1.2rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.28);
+      font-family: var(--font-primary);
+      font-size: 1.6rem;
+      letter-spacing: 0.02em;
+      color: #fff;
+    }
+
+    /* ---- Ranking personal ---- */
+    .poc-ranking {
+      margin-top: var(--poc-penaltis-hueco-lg);
+      padding: 2rem 1.8rem 1.6rem;
+      border: 1px solid var(--poc-linea);
+      border-radius: 16px;
+      background: var(--poc-noche-2);
+    }
+
+    .poc-ranking__cabecera {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .poc-estadio .poc-ranking__titulo {
+      margin: 0;
+      padding: 0;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--poc-acento);
+    }
+
+    .poc-ranking__division {
+      padding: 0.2rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(247, 201, 72, 0.55);
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--poc-texto);
+    }
+
+    .poc-ranking__total {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      margin: 1rem 0 0.8rem !important;
+      font-size: 1.6rem;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-ranking__total strong {
+      font-family: var(--font-primary);
+      font-size: 4rem;
+      line-height: 1;
+      color: var(--poc-texto);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .poc-ranking__hoy { margin-left: auto; font-weight: bold; color: var(--poc-acento); }
+
+    .poc-ranking__pista {
+      position: relative;
+      display: block;
+      height: 0.6rem;
+      border-radius: 999px;
+      background: var(--poc-noche-3);
+      overflow: hidden;
+    }
+
+    .poc-ranking__barra {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--poc-acento);
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      transition: transform 0.6s ease-out;
+    }
+
+    .poc-ranking__siguiente { margin-top: 0.6rem !important; font-size: 1.3rem; color: var(--poc-texto-2); }
+
+    .poc-evolucion { margin: 2rem 0 0; }
+
+    .poc-evolucion__titulo {
+      margin-bottom: 0.6rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-evolucion__svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .poc-evolucion__valor,
+    .poc-evolucion__dia,
+    .poc-evolucion__media-texto { font-size: 11px !important; }
+    .poc-evolucion__base { stroke: var(--poc-linea-2); stroke-width: 1; }
+    .poc-evolucion__barra { fill: #3a4a6b; transition: fill 0.15s; }
+    .poc-evolucion__col.is-hoy .poc-evolucion__barra { fill: var(--poc-acento); }
+    .poc-evolucion__hit { fill: transparent; }
+    .poc-evolucion__valor,
+    .poc-evolucion__dia,
+    .poc-evolucion__media-texto { font: 600 10px/1 var(--font-stack, sans-serif); text-anchor: middle; }
+    .poc-evolucion__valor { fill: var(--poc-texto); opacity: 0; transition: opacity 0.15s; }
+    .poc-evolucion__dia { fill: var(--poc-texto-2); }
+    .poc-evolucion__col.is-hoy .poc-evolucion__valor,
+    .poc-evolucion__col:hover .poc-evolucion__valor { opacity: 1; }
+    .poc-evolucion__col:hover .poc-evolucion__barra { fill: #52648a; }
+    .poc-evolucion__col.is-hoy:hover .poc-evolucion__barra { fill: var(--poc-acento-2); }
+    .poc-evolucion__media { stroke: var(--poc-texto-2); stroke-width: 1; stroke-dasharray: 3 3; }
+    .poc-evolucion__media-texto { fill: var(--poc-texto-2); text-anchor: start; font-weight: 400; }
+
+    .poc-ranking__puesto { margin-top: 1rem !important; font-weight: bold; color: var(--poc-texto); }
+    .poc-ranking .poc-reglas--resultado { margin: 1.6rem 0 0; }
+    .poc-ranking .poc-reglas li { background: var(--poc-noche); }
+
+    /* Nombres largos de jugadores en móvil: un punto menos antes que partir palabras */
+    @media (max-width: 420px) {
+      .poc-estadio .poc-opcion { font-size: 1.45rem; gap: 0.6rem; padding-left: 0.9rem; padding-right: 0.9rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-reloj__barra,
+      .poc-ranking__barra { transition: none; }
+      .poc-reloj[data-poc-urgente="true"] .poc-reloj__num { animation: none; }
+    }
+    /* ==========================================================
+       V4.2 · ACABADO PREMIUM (2026-09-25)
+       Misma estructura; cambia la materia: página entera de noche,
+       superficies de «vidrio» con luz cenital (borde superior claro),
+       sombras en dos capas, franja blaugrana como firma, marcador de
+       retransmisión y CTA dorado con volumen. Solo colores del club,
+       sin escudo ni marcas.
+       ========================================================== */
+    :root {
+      color-scheme: dark;
+      --poc-blau: #004d98;
+      --poc-grana: #a50044;
+      --poc-oro: #edbb00;
+      --poc-fondo: #060a14;
+      --poc-vidrio: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018));
+      --poc-luz: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      --poc-sombra: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 30px -18px rgba(0, 0, 0, 0.9);
+      --poc-borde: rgba(255, 255, 255, 0.09);
+      --poc-franja: linear-gradient(90deg, var(--poc-blau), var(--poc-grana) 50%, var(--poc-blau));
+    }
+
+    /* ---- Página: todo es noche de partido, con dos focos de color ---- */
+    html { background: var(--poc-fondo); }
+
+    body.fourty.ft-brand-sport {
+      min-height: 100vh;
+      color: var(--poc-texto);
+      background:
+        radial-gradient(1100px 520px at 50% -180px, rgba(0, 77, 152, 0.34), rgba(0, 77, 152, 0) 70%),
+        radial-gradient(700px 420px at 92% -60px, rgba(165, 0, 68, 0.22), rgba(165, 0, 68, 0) 70%),
+        var(--poc-fondo);
+      background-attachment: fixed;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .poc-cabecera .ft-title {
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .poc-cabecera .poc-cabecera__intro,
+    .poc-cabecera #poc-aviso { color: var(--poc-texto-2); }
+
+    .poc-kicker {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 0 0 0.8rem !important;
+      font-size: 1.1rem;
+      font-weight: bold;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-kicker__franja {
+      width: 2.4rem;
+      height: 1.2rem;
+      border-radius: 3px;
+      background: repeating-linear-gradient(90deg, var(--poc-blau) 0 4px, var(--poc-grana) 4px 8px);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    body[data-poc-vista="juego"] .poc-kicker { display: none; }
+
+    /* ---- El estadio: panel de vidrio con franja blaugrana arriba ---- */
+    .poc-estadio {
+      background:
+        radial-gradient(120% 50% at 50% -10%, rgba(247, 201, 72, 0.1), rgba(247, 201, 72, 0) 60%),
+        radial-gradient(80% 40% at 50% 112%, rgba(55, 138, 58, 0.2), rgba(55, 138, 58, 0) 70%),
+        linear-gradient(180deg, #0d1528, #080d1a);
+      border: 1px solid var(--poc-borde);
+      box-shadow: var(--poc-luz), 0 50px 100px -50px rgba(0, 0, 0, 0.95);
+    }
+
+    .poc-estadio::before {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--poc-franja);
+      box-shadow: 0 0 18px rgba(165, 0, 68, 0.55);
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .poc-estadio { border-left: 0; border-right: 0; }
+      .poc-estadio::before { left: 0; right: 0; }
+    }
+
+    /* ---- Marcador de retransmisión: «TÚ» en blaugrana, portero en neutro ---- */
+    .poc-estadio .poc-marcador {
+      padding: 0.6rem;
+      background: var(--poc-vidrio), rgba(10, 16, 32, 0.6);
+      border: 1px solid var(--poc-borde);
+      box-shadow: var(--poc-luz), var(--poc-sombra);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .poc-estadio .poc-marcador__resultado { align-items: center; gap: 0.8rem; letter-spacing: 0.1em; }
+
+    .poc-estadio .poc-marcador__resultado > span:first-child,
+    .poc-estadio .poc-marcador__resultado > span:last-child {
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .poc-estadio .poc-marcador__resultado > span:first-child {
+      color: #fff;
+      background: linear-gradient(135deg, var(--poc-blau), var(--poc-grana));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .poc-estadio .poc-marcador__resultado > span:last-child {
+      color: var(--poc-texto-2);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 1px var(--poc-borde);
+    }
+
+    .poc-estadio .poc-marcador { padding: 0.8rem 0.8rem 0.8rem 0.8rem; }
+    .poc-estadio .poc-marcador__num { font-size: 2.8rem; color: #fff; min-width: 1.6ch; }
+    .poc-estadio .poc-marcador__resultado > span[aria-hidden="true"] { color: var(--poc-texto-2); font-size: 1.6rem; }
+    .poc-estadio .poc-marcador .poc-tanda__tiro { width: 2.6rem; height: 2.6rem; }
+
+    @media (max-width: 420px) {
+      .poc-estadio .poc-marcador__num { font-size: 2.2rem; }
+      .poc-estadio .poc-marcador .poc-tanda__tiro { width: 2.1rem; height: 2.1rem; }
+      .poc-estadio .poc-marcador__resultado { gap: 0.5rem; }
+      .poc-estadio .poc-marcador__resultado > span:first-child,
+      .poc-estadio .poc-marcador__resultado > span:last-child { padding: 0.45rem 0.8rem; }
+    }
+
+    /* Foco del CTA: anillo fino y claro, sin el borde grueso del DS */
+    .poc-estadio .ft-btn--primary:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 3px;
+    }
+
+    .poc-estadio .poc-marcador .poc-tanda__tiro[data-poc-tiro="gol"] { box-shadow: 0 0 12px -2px rgba(0, 189, 62, 0.8); }
+    .poc-estadio .poc-marcador .poc-tanda__tiro[data-poc-tiro="parada"] { box-shadow: 0 0 12px -2px rgba(253, 55, 0, 0.7); }
+    .poc-estadio .poc-marcador .poc-tanda__tiro[data-poc-tiro="actual"] { box-shadow: 0 0 0 3px rgba(247, 201, 72, 0.18); }
+
+    /* ---- Pregunta ---- */
+    .poc-estadio .poc-antetitulo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .poc-estadio .poc-antetitulo::before {
+      content: "";
+      width: 1.6rem;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--poc-acento);
+    }
+
+    .poc-estadio #poc-pregunta-texto {
+      display: block;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      text-wrap: balance;
+    }
+
+    /* ---- Escena: marco fino y sombra profunda ---- */
+    .poc-estadio .poc-escena {
+      border-radius: 16px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 60px -30px rgba(0, 0, 0, 1);
+    }
+
+    .poc-estadio .poc-rotulo {
+      font-size: 2.4rem;
+      letter-spacing: 0.02em;
+      box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6);
+    }
+
+    .poc-estadio .poc-rotulo[data-poc-resultado="gol"] {
+      background: linear-gradient(180deg, #2ee06a, #00b33a);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 0 40px -6px rgba(0, 189, 62, 0.9);
+    }
+
+    .poc-estadio .poc-rotulo[data-poc-resultado="parada"] {
+      background: linear-gradient(180deg, #ff6a3d, #e03000);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 0 40px -6px rgba(253, 55, 0, 0.8);
+    }
+
+    .poc-estadio .poc-chip {
+      background: rgba(6, 10, 20, 0.7);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    /* ---- Reloj con brillo ---- */
+    .poc-estadio .poc-reloj__pista {
+      height: 0.6rem;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .poc-estadio .poc-reloj__barra {
+      background: linear-gradient(90deg, var(--poc-oro), var(--poc-acento-2));
+      box-shadow: 0 0 12px rgba(247, 201, 72, 0.55);
+    }
+
+    .poc-estadio .poc-reloj[data-poc-urgente="true"] .poc-reloj__barra {
+      background: linear-gradient(90deg, #e03000, #ff6a3d);
+      box-shadow: 0 0 14px rgba(253, 55, 0, 0.7);
+    }
+
+    .poc-estadio .poc-reloj__num { font-size: 1.6rem; color: #fff; }
+    .poc-estadio .poc-reloj__icono { color: var(--poc-texto-2); }
+
+    /* ---- Respuestas: vidrio, letra en relieve, elevación al pasar ---- */
+    .poc-estadio .poc-opcion {
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      border: 1px solid var(--poc-borde);
+      border-radius: 14px;
+      box-shadow: var(--poc-luz), 0 8px 18px -12px rgba(0, 0, 0, 0.9);
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      transition: transform 0.18s cubic-bezier(.2, .8, .3, 1), border-color 0.18s, box-shadow 0.18s, background-color 0.18s, opacity 0.2s;
+    }
+
+    @media (hover: hover) {
+      .poc-estadio .poc-opcion:hover:not([aria-disabled="true"]) {
+        transform: translateY(-2px);
+        background: linear-gradient(180deg, rgba(247, 201, 72, 0.1), rgba(247, 201, 72, 0.02)), var(--poc-noche-2);
+        border-color: rgba(247, 201, 72, 0.7);
+        box-shadow: var(--poc-luz), 0 0 0 1px rgba(247, 201, 72, 0.25), 0 16px 30px -16px rgba(247, 201, 72, 0.45);
+      }
+    }
+
+    .poc-estadio .poc-opcion__letra {
+      background: linear-gradient(180deg, #ffffff, #d9e0ee);
+      color: var(--poc-tinta);
+      font-family: var(--font-primary);
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.45);
+    }
+
+    .poc-estadio .poc-opcion.is-elegida {
+      background: linear-gradient(180deg, rgba(247, 201, 72, 0.16), rgba(247, 201, 72, 0.04)), var(--poc-noche-2);
+    }
+
+    .poc-estadio .poc-opcion.is-elegida .poc-opcion__letra { background: linear-gradient(180deg, var(--poc-acento-2), var(--poc-oro)); }
+
+    .poc-estadio .poc-opcion.is-correcta {
+      background: linear-gradient(180deg, rgba(0, 189, 62, 0.24), rgba(0, 189, 62, 0.07)), var(--poc-noche-2);
+      box-shadow: 0 0 0 1px rgba(0, 189, 62, 0.4), 0 18px 34px -18px rgba(0, 189, 62, 0.7);
+    }
+
+    .poc-estadio .poc-opcion.is-fallada {
+      background: linear-gradient(180deg, rgba(253, 55, 0, 0.22), rgba(253, 55, 0, 0.06)), var(--poc-noche-2);
+      box-shadow: 0 0 0 1px rgba(253, 55, 0, 0.35), 0 18px 34px -18px rgba(253, 55, 0, 0.6);
+    }
+
+    .poc-estadio .poc-opcion.is-correcta .poc-opcion__letra { background: linear-gradient(180deg, #2ee06a, #00b33a); }
+    .poc-estadio .poc-opcion.is-fallada .poc-opcion__letra { background: linear-gradient(180deg, #ff6a3d, #e03000); }
+    .poc-estadio .poc-opcion .poc-opcion__icono { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); }
+
+    /* ---- Veredicto: tarjeta de vidrio con filo de color ---- */
+    .poc-estadio .poc-veredicto {
+      position: relative;
+      border: 1px solid var(--poc-borde);
+      border-left-width: 1px;
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem 1.2rem 1.9rem;
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      box-shadow: var(--poc-luz), var(--poc-sombra);
+      overflow: hidden;
+    }
+
+    .poc-estadio .poc-veredicto::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--poc-linea-2);
+    }
+
+    .poc-estadio .poc-veredicto[data-poc-resultado="gol"]::before { background: var(--poc-penaltis-ok); box-shadow: 0 0 14px rgba(0, 189, 62, 0.9); }
+    .poc-estadio .poc-veredicto[data-poc-resultado="parada"]::before { background: var(--poc-penaltis-ko); box-shadow: 0 0 14px rgba(253, 55, 0, 0.8); }
+    .poc-estadio .poc-veredicto { line-height: 1.5; }
+
+    /* ---- CTA dorado con volumen ---- */
+    .poc-estadio .ft-btn--primary,
+    .poc-estadio .ft-btn--primary:active {
+      min-height: 4.8rem;
+      border: 0;
+      background: linear-gradient(180deg, #ffdc6e, #f2bd2c);
+      color: var(--poc-tinta);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 12px 26px -12px rgba(247, 201, 72, 0.75);
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    }
+
+    .poc-estadio .ft-btn--primary:hover {
+      background: linear-gradient(180deg, #ffe38a, #f5c63f);
+      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 16px 30px -12px rgba(247, 201, 72, 0.85);
+    }
+
+    .poc-estadio .ft-btn--primary:active { transform: translateY(0); filter: brightness(0.96); }
+    .poc-estadio .ft-btn[data-poc-hecho] { background: linear-gradient(180deg, #2ee06a, #00b33a); }
+
+    .poc-estadio kbd {
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      border-color: var(--poc-borde);
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    /* ---- Entrada ---- */
+    .poc-estadio .poc-entrada__titulo {
+      font-size: 5.2rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(180deg, #ffffff 30%, #b9c4da);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .poc-estadio .poc-esquema {
+      border-radius: 16px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 60px -30px rgba(0, 0, 0, 1);
+    }
+
+    .poc-estadio .poc-reglas li {
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      border-color: var(--poc-borde);
+      box-shadow: var(--poc-luz), 0 8px 18px -12px rgba(0, 0, 0, 0.9);
+      border-radius: 14px;
+    }
+
+    .poc-estadio .poc-reglas strong { letter-spacing: -0.02em; }
+
+    .poc-estadio .poc-racha-nota { margin-bottom: 2rem; font-weight: 600; }
+
+    .poc-estadio .poc-progreso,
+    .poc-estadio .poc-racha-nota {
+      border-radius: 14px;
+      box-shadow: var(--poc-luz);
+    }
+
+    /* ---- Resultado: tarjeta de final con brillo y cifras con relieve ---- */
+    .poc-estadio .poc-tarjeta {
+      border-radius: 20px;
+      border-color: rgba(255, 255, 255, 0.2);
+      background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 70%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 28px, rgba(255, 255, 255, 0) 28px 56px),
+        linear-gradient(180deg, #1f7433, #0f3e1c);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 30px 60px -30px rgba(0, 0, 0, 1);
+    }
+
+    .poc-estadio .poc-tarjeta__goles { text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35); }
+    .poc-estadio .poc-tarjeta .poc-tanda__tiro { box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.6); }
+
+    .poc-estadio .poc-tarjeta__puntos {
+      background: linear-gradient(180deg, #ffdc6e, #f2bd2c);
+      color: var(--poc-tinta);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 20px -8px rgba(0, 0, 0, 0.6);
+    }
+
+    .poc-estadio .poc-ranking {
+      position: relative;
+      border-color: var(--poc-borde);
+      border-radius: 18px;
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      box-shadow: var(--poc-luz), var(--poc-sombra);
+      overflow: hidden;
+    }
+
+    .poc-estadio .poc-ranking::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--poc-franja);
+      opacity: 0.8;
+    }
+
+    .poc-estadio .poc-ranking__division {
+      background: linear-gradient(135deg, rgba(0, 77, 152, 0.5), rgba(165, 0, 68, 0.5));
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+
+    .poc-estadio .poc-ranking__barra {
+      background: linear-gradient(90deg, var(--poc-oro), var(--poc-acento-2));
+      box-shadow: 0 0 12px rgba(247, 201, 72, 0.5);
+    }
+
+    .poc-estadio .poc-ranking .poc-reglas li { background: rgba(6, 10, 20, 0.55); }
+
+    /* ---- Pie de revisión sobre fondo oscuro ---- */
+    .poc-pie {
+      border-top-color: rgba(255, 255, 255, 0.14);
+      color: var(--poc-texto-2);
+      opacity: 1;
+    }
+
+    .poc-pie .ft-text,
+    .poc-pie .ft-link { color: var(--poc-texto-2); }
+    .poc-pie__etiqueta { background: rgba(255, 255, 255, 0.08); color: var(--poc-texto); }
+    .poc-aviso-ds { background: rgba(255, 255, 255, 0.05); color: var(--poc-texto-2); }
+    .ft-skiplink { color: var(--poc-texto); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-estadio .poc-opcion,
+      .poc-estadio .ft-btn--primary { transition: none; }
+      .poc-estadio .poc-opcion:hover:not([aria-disabled="true"]),
+      .poc-estadio .ft-btn--primary:hover { transform: none; }
+    }
+    /* ==========================================================
+       V4.4 · LÍMITES DE JUEGO Y MÓVIL (2026-09-25)
+       ========================================================== */
+
+    /* ---- Botón secundario (compartir) al lado del CTA ---- */
+    .poc-estadio .poc-btn-sec {
+      min-height: 4.8rem;
+      border: 1px solid var(--poc-linea-2);
+      background: var(--poc-vidrio), var(--poc-noche-2);
+      color: var(--poc-texto);
+      font-weight: 700;
+      box-shadow: var(--poc-luz);
+    }
+
+    @media (hover: hover) {
+      .poc-estadio .poc-btn-sec:hover { border-color: var(--poc-acento); color: #fff; }
+    }
+
+    .poc-estadio .poc-btn-sec:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: 3px; }
+    .poc-estadio .poc-acciones--resultado { margin-top: 1.6rem; }
+    .poc-estadio .poc-acciones--resultado [hidden] { display: none; }
+
+    /* ---- Lo que te queda ---- */
+    .poc-limite {
+      margin: 1rem 0 0 !important;
+      font-size: 1.3rem;
+      text-align: center;
+      color: var(--poc-texto-2);
+    }
+
+    .poc-limite[hidden] { display: none; }
+    .poc-estadio #poc-vista-entrada .poc-limite { text-align: left; margin: 0 0 1.2rem !important; }
+
+    /* ---- Descanso: cuenta atrás grande y barra que se llena ---- */
+    .poc-descanso {
+      position: relative;
+      margin: 1.6rem 0 0;
+      padding: 2rem 1.8rem 1.8rem;
+      border: 1px solid var(--poc-borde);
+      border-radius: 18px;
+      background:
+        radial-gradient(90% 70% at 50% 0%, rgba(0, 77, 152, 0.28), rgba(0, 77, 152, 0) 70%),
+        var(--poc-vidrio), var(--poc-noche-2);
+      box-shadow: var(--poc-luz), var(--poc-sombra);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .poc-descanso[hidden] { display: none; }
+
+    .poc-descanso::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--poc-franja);
+    }
+
+    .poc-descanso__titulo {
+      margin: 0 0 0.6rem !important;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--poc-acento);
+    }
+
+    .poc-descanso__texto { margin: 0 auto !important; max-width: 34ch; color: var(--poc-texto); }
+
+    .poc-descanso__cuenta {
+      margin: 0.8rem 0 1.2rem !important;
+      font-family: var(--font-primary);
+      font-size: 5.2rem;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+    }
+
+    .poc-descanso__cuenta[hidden] { display: none; }
+
+    .poc-descanso__pista {
+      position: relative;
+      display: block;
+      height: 0.6rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .poc-descanso__pista[hidden] { display: none; }
+
+    .poc-descanso__barra {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--poc-blau), var(--poc-grana));
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      transition: transform 1s linear;
+    }
+
+    .poc-descanso[data-poc-motivo="agotadas"] .poc-descanso__texto { margin-top: 0.4rem !important; }
+    .poc-estadio #poc-vista-entrada .poc-descanso { margin: 0 0 1.6rem; }
+
+    /* ---- Táctil (iOS, Android): sin zoom por doble toque, sin destello
+       gris al tocar, sin menú de «copiar» al mantener sobre una respuesta,
+       y con respuesta visual al apoyar el dedo (no hay hover). ---- */
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+    .poc-estadio button,
+    .poc-estadio a,
+    .poc-estadio summary {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .poc-estadio .poc-opcion {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    @media (hover: none) {
+      .poc-estadio .poc-opcion:active:not([aria-disabled="true"]) {
+        transform: scale(0.98);
+        border-color: rgba(247, 201, 72, 0.8);
+        background: linear-gradient(180deg, rgba(247, 201, 72, 0.14), rgba(247, 201, 72, 0.03)), var(--poc-noche-2);
+      }
+
+      .poc-estadio .ft-btn--primary:active { transform: scale(0.98); }
+    }
+
+    /* Botones de al menos 44 px de alto en táctil (guía de Apple y de Android: 44/48) */
+    @media (pointer: coarse) {
+      .poc-estadio .ft-btn { min-height: 4.8rem; }
+      .poc-estadio .poc-opcion { min-height: 6.8rem; }
+      .poc-repaso-plegable summary { min-height: 4.8rem; }
+    }
+
+    /* ---- Pantallas estrechas (iPhone SE, Galaxy S9, 320–360 px): el
+       marcador no cabía y desbordaba la página. ---- */
+    @media (max-width: 374px) {
+      .poc-estadio .poc-marcador { gap: 0.4rem; padding: 0.6rem; }
+      .poc-estadio .poc-marcador__resultado { gap: 0.4rem; }
+      .poc-estadio .poc-marcador__resultado > span:first-child,
+      .poc-estadio .poc-marcador__resultado > span:last-child { padding: 0.4rem 0.6rem; font-size: 1rem; letter-spacing: 0.06em; }
+      .poc-estadio .poc-marcador__num { font-size: 2rem; }
+      .poc-estadio .poc-marcador .poc-tanda { gap: 0.3rem; }
+      .poc-estadio .poc-marcador .poc-tanda__tiro { width: 1.8rem; height: 1.8rem; font-size: 0.9rem; border-width: 2px; }
+      .poc-estadio .poc-opcion { font-size: 1.35rem; padding-left: 0.7rem; padding-right: 0.7rem; gap: 0.5rem; }
+      .poc-estadio .poc-opcion__letra { width: 2.8rem; height: 2.8rem; }
+      .poc-descanso__cuenta { font-size: 4.4rem; }
+    }
+
+    /* ---- Muescas y barras del sistema: el estadio a sangre respeta las
+       zonas seguras en horizontal (iPhone con Dynamic Island / notch). ---- */
+    @media (max-width: 600px) {
+      .poc-estadio {
+        padding-left: max(1.6rem, env(safe-area-inset-left));
+        padding-right: max(1.6rem, env(safe-area-inset-right));
+      }
+    }
+
+    /* ---- Móvil en horizontal: dos columnas y escena a la altura de la
+       pantalla, para que pregunta, reloj y respuestas quepan sin scroll. ---- */
+    @media (orientation: landscape) and (max-height: 540px) and (max-width: 1023px) {
+      body[data-poc-vista="juego"] .poc-cabecera { display: none; }
+
+      .poc-estadio {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 1.2rem max(1.6rem, env(safe-area-inset-right)) 1.2rem max(1.6rem, env(safe-area-inset-left));
+        border-radius: 0;
+      }
+
+      #poc-vista-juego.poc-juego {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+          "marcador marcador"
+          "escena pregunta"
+          "escena reloj"
+          "escena opciones"
+          "escena veredicto"
+          "escena acciones"
+          "escena .";
+        column-gap: 1.6rem;
+        align-items: start;
+      }
+
+      #poc-vista-juego[hidden] { display: none; }
+      #poc-vista-juego .poc-marcador { grid-area: marcador; margin-bottom: 0.8rem; }
+      #poc-vista-juego .poc-pregunta { grid-area: pregunta; margin-bottom: 0.6rem; }
+      #poc-vista-juego #poc-escena {
+        grid-area: escena;
+        margin: 0;
+        width: min(46vw, calc((100svh - 8.4rem) * 360 / 260));
+      }
+      #poc-vista-juego .poc-reloj { grid-area: reloj; margin-bottom: 0.6rem; }
+      #poc-vista-juego .poc-opciones { grid-area: opciones; }
+      #poc-vista-juego .poc-veredicto { grid-area: veredicto; }
+      #poc-vista-juego #poc-ayuda-teclado,
+      #poc-vista-juego #poc-estado-tiro { display: none; }
+      #poc-vista-juego #poc-acciones-juego {
+        grid-area: acciones;
+        position: sticky;
+        bottom: 0;
+        padding: 0.8rem 0 calc(0.8rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--poc-noche) 70%, rgba(10, 16, 32, 0));
+      }
+      #poc-vista-juego #poc-acciones-juego .ft-btn { width: 100%; }
+      .poc-estadio .poc-pregunta #poc-pregunta-texto { font-size: 1.8rem; line-height: 1.2; }
+      .poc-estadio .poc-opcion { min-height: 5.2rem; font-size: 1.4rem; }
+      .poc-estadio .poc-veredicto { padding: 1rem 1.2rem; font-size: 1.3rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-descanso__barra { transition: none; }
+    }
+    /* ==========================================================
+       V4.5 · BLOQUE PERFECTO (2026-09-25)
+       ========================================================== */
+    .poc-plenos {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin: 1.2rem 0 0;
+      padding: 1.1rem 1.4rem;
+      border: 1px solid rgba(237, 187, 0, 0.35);
+      border-radius: 14px;
+      background:
+        linear-gradient(90deg, rgba(237, 187, 0, 0.12), rgba(237, 187, 0, 0.02)),
+        var(--poc-noche-2);
+      box-shadow: var(--poc-luz);
+    }
+
+    .poc-plenos[hidden] { display: none; }
+    .poc-estadio #poc-vista-entrada .poc-plenos { margin: 0 0 1.6rem; }
+
+    .poc-plenos__lista {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .poc-plenos__lista li {
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      border: 2px solid rgba(237, 187, 0, 0.45);
+    }
+
+    .poc-plenos__lista li[data-poc-pleno="si"] {
+      border-color: var(--poc-oro);
+      background: radial-gradient(circle at 35% 30%, #fff3b0, var(--poc-oro) 60%);
+      box-shadow: 0 0 10px rgba(237, 187, 0, 0.6);
+    }
+
+    .poc-plenos__texto {
+      margin: 0 !important;
+      font-size: 1.35rem;
+      line-height: 1.4;
+      color: var(--poc-texto);
+    }
+
+    .poc-plenos[data-poc-conseguido] {
+      border-color: var(--poc-oro);
+      background:
+        radial-gradient(120% 120% at 0% 50%, rgba(237, 187, 0, 0.28), rgba(237, 187, 0, 0) 70%),
+        var(--poc-noche-2);
+    }
+
+    .poc-plenos[data-poc-conseguido] .poc-plenos__texto { font-weight: 700; }
+
+    .poc-tarjeta__bonus {
+      padding: 0.4rem 1.4rem;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fff1a8, #edbb00);
+      color: var(--poc-tinta) !important;
+      font-family: var(--font-primary);
+      font-size: 1.6rem;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 0 30px rgba(237, 187, 0, 0.6);
+      animation: poc-bonus 0.6s cubic-bezier(.2, 1.6, .5, 1) both;
+    }
+
+    .poc-tarjeta__bonus[hidden] { display: none; }
+
+    @keyframes poc-bonus {
+      from { transform: scale(0.6); opacity: 0; }
+      to { transform: none; opacity: 1; }
+    }
+
+    @media (max-width: 374px) {
+      .poc-plenos { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-tarjeta__bonus { animation: none; }
+    }
+
+    /* ==========================================================
+       V4.7 · RÓTULO DE RETRANSMISIÓN
+       El «¡Gol!» / «¡Parada!» deja de ser una pastilla: es un grafismo
+       de tele en dos tiempos. 1) Golpe (≈1,8 s): destello, rayos,
+       banda que barre la escena, letras que caen una a una y confeti
+       blaugrana en el gol. 2) Firma: todo se recoge en una placa
+       pequeña abajo a la derecha para no tapar la repetición.
+       ========================================================== */
+    .poc-escena { container-type: inline-size; }
+
+    .poc-estadio .poc-rotulo,
+    .poc-rotulo {
+      position: absolute;
+      inset: 0;
+      right: auto;
+      bottom: auto;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      border-radius: 0;
+      background: none;
+      box-shadow: none;
+      font-size: 1rem;
+      line-height: 1;
+      letter-spacing: 0;
+      opacity: 1;
+      transform: none;
+      transition: none;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 2;
+      color: var(--color-white);
+    }
+    .poc-estadio .poc-rotulo[data-poc-resultado="gol"],
+    .poc-estadio .poc-rotulo[data-poc-resultado="parada"] { background: none; box-shadow: none; color: var(--color-white); }
+    .poc-rotulo.is-visible { visibility: visible; transform: none; }
+
+    .poc-rotulo > span { position: absolute; display: block; pointer-events: none; }
+
+    /* ---- Destello de pantalla ---- */
+    .poc-rotulo__flash {
+      inset: 0;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95), rgba(255, 240, 190, 0.35) 40%, rgba(255, 255, 255, 0) 75%);
+      mix-blend-mode: screen;
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__flash {
+      background: radial-gradient(circle at 50% 50%, rgba(255, 150, 110, 0.8), rgba(253, 55, 0, 0.3) 45%, rgba(0, 0, 0, 0) 75%);
+    }
+
+    /* ---- Viñeta que oscurece el fondo para que el texto mande ---- */
+    .poc-rotulo__velo {
+      inset: 0;
+      opacity: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(4, 8, 20, 0.15), rgba(4, 8, 20, 0.7) 80%);
+    }
+
+    /* ---- Rayos: sol giratorio detrás del texto ---- */
+    .poc-rotulo__rayos {
+      left: 50%;
+      top: 50%;
+      width: 170cqi;
+      height: 170cqi;
+      margin: -85cqi 0 0 -85cqi;
+      opacity: 0;
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg,
+          rgba(237, 187, 0, 0.55) 0deg 5deg, rgba(237, 187, 0, 0) 5deg 15deg);
+      -webkit-mask: radial-gradient(circle, #000 8%, rgba(0, 0, 0, 0.6) 30%, transparent 62%);
+      mask: radial-gradient(circle, #000 8%, rgba(0, 0, 0, 0.6) 30%, transparent 62%);
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__rayos {
+      background: repeating-conic-gradient(from 0deg,
+          rgba(255, 106, 61, 0.5) 0deg 4deg, rgba(255, 106, 61, 0) 4deg 18deg);
+    }
+
+    /* ---- Banda que barre la escena de lado a lado ---- */
+    .poc-rotulo__banda {
+      left: -10%;
+      right: -10%;
+      top: 50%;
+      height: 34cqi;
+      max-height: 56%;
+      transform: translateY(-50%) skewY(-6deg);
+      clip-path: inset(0 100% 0 0);
+      background:
+        linear-gradient(180deg, var(--poc-oro, #edbb00) 0 3px, transparent 3px calc(100% - 3px), var(--poc-oro, #edbb00) calc(100% - 3px)),
+        linear-gradient(90deg, rgba(0, 77, 152, 0) 0%, rgba(0, 77, 152, 0.92) 18%, rgba(165, 0, 68, 0.92) 82%, rgba(165, 0, 68, 0) 100%);
+      box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.6);
+    }
+    .poc-rotulo__banda::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+      background-size: 250% 100%;
+      background-position: 150% 0;
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__banda {
+      transform: translateY(-50%) skewY(5deg);
+      background:
+        linear-gradient(180deg, #ff6a3d 0 3px, transparent 3px calc(100% - 3px), #ff6a3d calc(100% - 3px)),
+        repeating-linear-gradient(-55deg, rgba(0, 0, 0, 0.18) 0 14px, rgba(0, 0, 0, 0) 14px 28px),
+        linear-gradient(90deg, rgba(30, 6, 6, 0) 0%, rgba(40, 8, 10, 0.94) 18%, rgba(120, 20, 8, 0.94) 82%, rgba(30, 6, 6, 0) 100%);
+    }
+
+    /* ---- Bloque de texto: palabra + subtítulo ---- */
+    .poc-rotulo__bloque {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transform-origin: 100% 100%;
+      text-align: center;
+      white-space: nowrap;
+      transition: none;
+    }
+    .poc-rotulo__bloque::before {
+      /* Placa de la firma: solo aparece al recogerse */
+      content: "";
+      position: absolute;
+      inset: -1.2cqi -3.5cqi; /* V4.9: placa con aire, no pisa las letras */
+      z-index: -1;
+      border-radius: 0.35em;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(0, 77, 152, 0.95), rgba(165, 0, 68, 0.95));
+      box-shadow: inset 0 0.08em 0 var(--poc-oro, #edbb00), 0 0.3em 0.9em -0.2em rgba(0, 0, 0, 0.8);
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__bloque::before {
+      background: linear-gradient(135deg, rgba(60, 10, 10, 0.95), rgba(150, 30, 8, 0.95));
+      box-shadow: inset 0 0.08em 0 #ff6a3d, 0 0.3em 0.9em -0.2em rgba(0, 0, 0, 0.8);
+    }
+
+    .poc-rotulo__palabra {
+      display: block;
+      font-family: var(--font-primary);
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      font-size: 15vw;
+      font-size: 23cqi;
+      line-height: 1;
+      margin: -0.16em 0 -0.12em; /* compensa el hueco interior de las letras */
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__palabra { font-size: 11vw; font-size: 15cqi; }
+
+    .poc-rotulo__letra {
+      display: inline-block;
+      /* V4.9: background-clip:text solo pinta dentro de la caja; el hueco
+         evita que la cursiva y los signos ¡! queden cortados */
+      padding: 0.16em 0.34em 0.12em 0.08em;
+      margin: 0 -0.34em 0 -0.04em; /* V4.10: la cursiva sintética empuja la parte alta a la derecha */
+      color: #fff;
+      background: linear-gradient(180deg, #ffffff 0%, #fff6d0 42%, #edbb00 58%, #b98a00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 0.012em rgba(60, 30, 0, 0.55);
+      filter: drop-shadow(0 0.04em 0 rgba(90, 0, 40, 0.95)) drop-shadow(0 0.1em 0.14em rgba(0, 0, 0, 0.6));
+      opacity: 0;
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__letra {
+      background: linear-gradient(180deg, #ffffff 0%, #ffe4d8 45%, #ff6a3d 60%, #c42600 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-stroke: 0.012em rgba(60, 0, 0, 0.55);
+      filter: drop-shadow(0 0.04em 0 rgba(40, 0, 0, 0.95)) drop-shadow(0 0.1em 0.14em rgba(0, 0, 0, 0.6));
+    }
+
+    .poc-rotulo__sub {
+      display: inline-block;
+      margin-top: 0.7em;
+      padding: 0.35em 0.9em;
+      border-radius: 999px;
+      font: bold 1rem/1 var(--font-primary);
+      font-size: clamp(0.8rem, 3.6cqi, 1.3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1a1200;
+      background: linear-gradient(180deg, #ffe066, var(--poc-oro, #edbb00));
+      box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.7);
+      opacity: 0;
+    }
+    .poc-rotulo[data-poc-resultado="parada"] .poc-rotulo__sub { color: #fff; background: linear-gradient(180deg, #ff6a3d, #d42a00); }
+    .poc-rotulo__sub:empty { display: none; }
+
+    /* ---- Confeti ---- */
+    .poc-rotulo__confeti { left: 50%; top: 50%; width: 0; height: 0; }
+    .poc-rotulo__confeti i {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--w, 8px);
+      height: var(--h, 14px);
+      margin: -7px 0 0 -4px;
+      border-radius: 2px;
+      background: var(--c, #edbb00);
+      opacity: 0;
+    }
+
+    /* ===== TIEMPO 1: el golpe ===== */
+    .poc-rotulo.is-golpe .poc-rotulo__flash { animation: poc-r-flash 0.55s ease-out both; }
+    .poc-rotulo.is-golpe .poc-rotulo__velo { animation: poc-r-velo 1.9s ease both; }
+    .poc-rotulo.is-golpe .poc-rotulo__rayos { animation: poc-r-rayos 1.9s cubic-bezier(.2, .8, .3, 1) both; }
+    .poc-rotulo.is-golpe .poc-rotulo__banda { animation: poc-r-barrido 1.9s cubic-bezier(.7, 0, .2, 1) both; }
+    .poc-rotulo.is-golpe .poc-rotulo__banda::after { animation: poc-r-brillo 0.9s 0.35s ease-in-out both; }
+    .poc-rotulo.is-golpe .poc-rotulo__letra {
+      animation: poc-r-letra 0.5s calc(0.12s + var(--i) * 0.055s) cubic-bezier(.2, 1.5, .4, 1) both;
+    }
+    .poc-rotulo.is-golpe .poc-rotulo__sub { animation: poc-r-sub 0.4s 0.6s cubic-bezier(.2, 1.4, .4, 1) both; }
+    .poc-rotulo.is-golpe .poc-rotulo__confeti i {
+      animation: poc-r-confeti 1.7s calc(0.15s + var(--d, 0s)) cubic-bezier(.15, .6, .4, 1) both;
+    }
+    /* La parada no cae en cascada: llega de golpe y el bloque tiembla,
+       como un balón que choca contra un muro. */
+    .poc-rotulo[data-poc-resultado="parada"].is-golpe .poc-rotulo__letra {
+      animation: poc-r-muro 0.34s calc(0.1s + var(--i) * 0.02s) cubic-bezier(.5, 0, .75, 0) both;
+    }
+    .poc-rotulo[data-poc-resultado="parada"].is-golpe .poc-rotulo__bloque { animation: poc-r-temblor 0.45s 0.44s linear both; }
+
+    @keyframes poc-r-flash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes poc-r-velo { 0% { opacity: 0; } 15%, 80% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes poc-r-rayos {
+      0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+      20% { opacity: 1; }
+      80% { opacity: 0.9; }
+      100% { opacity: 0; transform: scale(1.1) rotate(40deg); }
+    }
+    @keyframes poc-r-barrido {
+      0% { clip-path: inset(0 100% 0 0); }
+      22% { clip-path: inset(0 0 0 0); }
+      80% { clip-path: inset(0 0 0 0); opacity: 1; }
+      100% { clip-path: inset(0 0 0 100%); opacity: 0.6; }
+    }
+    @keyframes poc-r-brillo { from { background-position: 150% 0; } to { background-position: -60% 0; } }
+    @keyframes poc-r-letra {
+      0% { opacity: 0; transform: translateY(-0.6em) scale(2.4) rotate(-8deg); filter: blur(6px); }
+      60% { opacity: 1; }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes poc-r-muro {
+      0% { opacity: 0; transform: scale(3.2); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes poc-r-temblor {
+      0%, 100% { transform: translate(-50%, -50%); }
+      15% { transform: translate(calc(-50% - 10px), calc(-50% + 3px)); }
+      30% { transform: translate(calc(-50% + 8px), calc(-50% - 2px)); }
+      50% { transform: translate(calc(-50% - 5px), -50%); }
+      70% { transform: translate(calc(-50% + 3px), calc(-50% + 1px)); }
+    }
+    @keyframes poc-r-sub {
+      0% { opacity: 0; transform: translateY(0.8em) scale(0.8); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes poc-r-confeti {
+      0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+      8% { opacity: 1; }
+      45% { transform: translate(var(--x), var(--y)) rotate(calc(var(--r) * 0.6)) scale(1); }
+      85% { opacity: 1; }
+      100% { opacity: 0; transform: translate(calc(var(--x) * 1.15), calc(var(--y) + 38cqi)) rotate(var(--r)) scale(1); }
+    }
+
+    /* ===== TIEMPO 2: la firma ===== */
+    .poc-rotulo.is-firma .poc-rotulo__letra,
+    .poc-rotulo.is-firma .poc-rotulo__sub { opacity: 1; }
+    .poc-rotulo.is-firma .poc-rotulo__bloque {
+      left: calc(100% - 3%);
+      top: calc(100% - 5%);
+      transform: translate(-100%, -100%) scale(0.36);
+      transition: left 0.45s cubic-bezier(.6, 0, .2, 1), top 0.45s cubic-bezier(.6, 0, .2, 1), transform 0.45s cubic-bezier(.6, 0, .2, 1);
+    }
+    .poc-rotulo.is-firma .poc-rotulo__bloque::before { opacity: 1; transition: opacity 0.3s 0.2s; }
+    .poc-rotulo.is-firma .poc-rotulo__bloque::before { border-radius: 0 0.35rem 0.35rem 0; }
+    /* V4.9: en la placa pequeña, sin sombra de relieve ni contorno: se lee más limpio */
+    .poc-rotulo.is-firma .poc-rotulo__letra,
+    .poc-rotulo.is-firma[data-poc-resultado="parada"] .poc-rotulo__letra {
+      -webkit-text-stroke: 0;
+      filter: drop-shadow(0 0.03em 0.02em rgba(0, 0, 0, 0.55));
+    }
+    .poc-rotulo.is-firma .poc-rotulo__palabra { font-size: 15vw; font-size: 23cqi; }
+    .poc-rotulo.is-firma[data-poc-resultado="parada"] .poc-rotulo__bloque { transform: translate(-100%, -100%) scale(0.42); }
+    .poc-rotulo.is-firma .poc-rotulo__sub { display: none; }
+
+    @media (max-width: 420px) {
+      .poc-rotulo.is-firma .poc-rotulo__bloque { transform: translate(-100%, -100%) scale(0.42); }
+      .poc-rotulo.is-firma[data-poc-resultado="parada"] .poc-rotulo__bloque { transform: translate(-100%, -100%) scale(0.44); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-rotulo.is-golpe *,
+      .poc-rotulo.is-golpe *::after { animation: none !important; }
+      .poc-rotulo.is-golpe .poc-rotulo__letra,
+      .poc-rotulo.is-golpe .poc-rotulo__sub { opacity: 1; }
+      .poc-rotulo.is-golpe .poc-rotulo__banda { clip-path: none; }
+      .poc-rotulo.is-firma .poc-rotulo__bloque { transition: none; }
+    }
+
+    /* ==========================================================
+       V4.8 · SPORT
+       El juego vive dentro de SPORT: hojas de marca brands/sport del
+       42DS, cabecera negra con el logo en rojo SPORT y la sección
+       «Juegos», titulares en la condensada de la marca (MediaSans Semi
+       Condensed, --font-secondary), CTA en rojo SPORT y el logo
+       firmando el rótulo y las vallas del estadio.
+       ========================================================== */
+    :root {
+      --poc-sport: #ec0918;
+      --poc-sport-2: #ff2a37;
+      --poc-condensada: var(--font-secondary, "MediaSans-Semi--Regular"), "Arial Narrow", Arial, sans-serif;
+    }
+
+    /* El pie de revisión es para el equipo: solo con ?revision=1 */
+    html:not([data-poc-revision]) .poc-pie { display: none; }
+
+    .poc-sport {
+      position: relative;
+      background: #0b0b0b;
+      border-bottom: 3px solid var(--poc-sport);
+      color: #fff;
+      line-height: 1;
+    }
+    .poc-sport__dentro {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 1.2rem 1.6rem;
+      padding-left: max(1.6rem, env(safe-area-inset-left));
+      padding-right: max(1.6rem, env(safe-area-inset-right));
+    }
+    .poc-sport__marca { display: block; color: var(--poc-sport); line-height: 0; }
+    .poc-sport__marca:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 2px; }
+    .poc-sport__logo { display: block; width: auto; height: 2.4rem; }
+    .poc-sport__seccion {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding-left: 1.2rem;
+      border-left: 1px solid rgba(255, 255, 255, 0.25);
+      font: bold 1.8rem/1 var(--poc-condensada);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .poc-sport__icono { width: 1.8rem; height: 1.8rem; }
+    .poc-sport__juego {
+      margin-left: auto;
+      font: bold 1.3rem/1 var(--font-stack);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    @media (max-width: 480px) {
+      .poc-sport__dentro { padding-top: 1rem; padding-bottom: 1rem; gap: 1rem; }
+      .poc-sport__logo { height: 2rem; }
+      .poc-sport__seccion { font-size: 1.6rem; padding-left: 1rem; }
+      .poc-sport__juego { display: none; }
+    }
+
+    /* Titulares y cifras en la condensada de SPORT */
+    .poc-cabecera .ft-title,
+    .poc-estadio .poc-marcador__num,
+    .poc-rotulo__palabra,
+    .poc-sport__seccion { font-family: var(--poc-condensada); }
+    .poc-cabecera .ft-title { text-transform: uppercase; letter-spacing: 0.005em; line-height: 0.95; }
+
+    /* CTA principal en rojo SPORT (el oro queda para puntos y foco) */
+    .poc-estadio .ft-btn--primary,
+    .poc-estadio .ft-btn--primary:active,
+    .poc-estadio .ft-btn--primary:focus-visible {
+      background: linear-gradient(180deg, var(--poc-sport-2), var(--poc-sport));
+      border-color: var(--poc-sport);
+      color: #fff;
+    }
+    .poc-estadio .ft-btn--primary,
+    .poc-estadio .ft-btn--primary:active {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 12px 26px -12px rgba(236, 9, 24, 0.8);
+    }
+    .poc-estadio .ft-btn--primary:hover {
+      background: linear-gradient(180deg, #ff4a55, var(--poc-sport-2));
+      border-color: var(--poc-sport-2);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 16px 30px -12px rgba(236, 9, 24, 0.9);
+    }
+    .poc-estadio .ft-btn[data-poc-hecho] { background: linear-gradient(180deg, #2ee06a, #00b33a); }
+
+    .poc-estadio .poc-entrada__titulo,
+    .poc-estadio .poc-veredicto__titulo,
+    .poc-descanso__titulo { font-family: var(--poc-condensada); letter-spacing: 0; }
+    .poc-estadio .poc-entrada__titulo { font-size: 6rem; }
+
+    /* El logo firma el rótulo, como la mosca de una retransmisión */
+    .poc-rotulo__marca {
+      display: table;
+      margin: 0 auto 0.5em;
+      padding: 0.45em 0.7em;
+      border-radius: 0.3em;
+      background: var(--poc-sport);
+      color: #fff;
+      line-height: 0;
+      font-size: clamp(0.7rem, 2.6cqi, 1.1rem);
+      box-shadow: 0 0.4em 1em -0.3em rgba(0, 0, 0, 0.7);
+      opacity: 0;
+    }
+    .poc-rotulo__marca svg { display: block; height: 1.6em; width: auto; }
+    .poc-rotulo.is-golpe .poc-rotulo__marca { animation: poc-r-sub 0.35s 0.05s cubic-bezier(.2, 1.4, .4, 1) both; }
+    .poc-rotulo.is-firma .poc-rotulo__marca {
+      opacity: 1;
+      transition: opacity 0.25s 0.35s; /* aparece cuando la placa ya ha llegado */
+      position: absolute;
+      right: calc(100% + 3.5cqi);
+      top: -1.2cqi;
+      bottom: -1.2cqi;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 1.8cqi;
+      font-size: 5cqi;
+      border-radius: 0.35rem 0 0 0.35rem;
+      box-shadow: inset 0 0.08em 0 rgba(255, 255, 255, 0.35);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .poc-rotulo.is-golpe .poc-rotulo__marca { opacity: 1; }
+    }
+
+    /* ==========================================================
+       V4.12 · TÍTULO «LA TANDA»
+       Grafismo de portada deportiva: «LA» en taco rojo SPORT, «TANDA»
+       enorme en la condensada, cursiva, metal con brillo que cruza una
+       vez, eco en contorno rojo detrás y los cinco tiros de la tanda
+       debajo sobre la franja blaugrana.
+       ========================================================== */
+    .poc-cabecera .poc-titulo {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      align-items: end;
+      column-gap: 0.03em;
+      margin: 0.4rem 0 1.4rem;
+      font-family: var(--poc-condensada);
+      font-size: clamp(7.2rem, 19vw, 12.8rem);
+      font-weight: bold;
+      font-style: italic;
+      line-height: 1;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .poc-titulo__la {
+      align-self: start;
+      margin-top: 0.2em;
+      padding: 0.08em 0.16em 0.04em 0.12em;
+      font-size: 0.3em;
+      line-height: 1;
+      color: #fff;
+      background: var(--poc-sport);
+      transform: skewX(-10deg) rotate(-6deg);
+      box-shadow: 0 0.12em 0.4em -0.1em rgba(236, 9, 24, 0.7);
+    }
+
+    .poc-titulo__palabra { position: relative; display: block; }
+    .poc-titulo__eco,
+    .poc-titulo__cara {
+      display: block;
+      /* hueco para la cursiva: background-clip:text no pinta fuera de la caja */
+      padding: 0.06em 0.22em 0.04em 0.04em;
+      margin: -0.06em -0.22em -0.04em -0.04em;
+    }
+    .poc-titulo__eco {
+      position: absolute;
+      inset: 0;
+      transform: translate(0.035em, 0.045em);
+      color: transparent;
+      -webkit-text-stroke: 0.018em var(--poc-sport);
+      opacity: 0.9;
+    }
+    .poc-titulo__cara {
+      position: relative;
+      color: #fff;
+      background:
+        linear-gradient(100deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 60%) 130% 0 / 250% 100% no-repeat,
+        linear-gradient(180deg, #ffffff 0%, #eef1f7 45%, #9fa9bd 52%, #ffffff 70%, #f2c200 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0.03em 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0.08em 0.12em rgba(0, 0, 0, 0.6));
+      animation: poc-titulo-brillo 1.6s 0.4s cubic-bezier(.6, 0, .3, 1) both;
+    }
+    @keyframes poc-titulo-brillo {
+      from { background-position: 130% 0, 0 0; }
+      to { background-position: -40% 0, 0 0; }
+    }
+
+    .poc-titulo__tiros {
+      grid-column: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.06em;
+      height: 0.07em;
+      margin-top: 0.06em;
+      padding-left: 0.05em;
+      background: var(--poc-franja);
+      border-radius: 99px;
+      transform: skewX(-12deg);
+    }
+    .poc-titulo__tiros i {
+      width: 0.11em;
+      height: 0.11em;
+      margin-left: 0.04em;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 0 0.018em #0b0b0b, 0 0 0.12em rgba(255, 255, 255, 0.5);
+      animation: poc-titulo-tiro 0.35s cubic-bezier(.2, 1.6, .4, 1) both;
+    }
+    .poc-titulo__tiros i:nth-child(1) { animation-delay: 0.9s; }
+    .poc-titulo__tiros i:nth-child(2) { animation-delay: 1.0s; }
+    .poc-titulo__tiros i:nth-child(3) { animation-delay: 1.1s; }
+    .poc-titulo__tiros i:nth-child(4) { animation-delay: 1.2s; }
+    .poc-titulo__tiros i:nth-child(5) { animation-delay: 1.3s; background: var(--poc-oro); }
+    @keyframes poc-titulo-tiro { from { transform: scale(0); } to { transform: scale(1); } }
+
+    /* Durante el juego el título se queda, pero más contenido */
+    body[data-poc-vista="juego"] .poc-cabecera .poc-titulo { font-size: clamp(4.4rem, 8vw, 7.2rem); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-titulo__cara,
+      .poc-titulo__tiros i { animation: none; }
+    }
+
+    /* ==========================================================
+       V4.13 · TÍTULO MÁS ELEGANTE
+       Menos ruido: sin eco rojo, metal más sereno (blanco a champán),
+       «LA» como un sello recto y fino, y los cinco tiros como aros
+       sobre una línea finísima que se desvanece.
+       ========================================================== */
+    .poc-cabecera .poc-titulo { column-gap: 0; letter-spacing: 0.01em; }
+
+    .poc-titulo__eco { display: none; }
+
+    .poc-titulo__cara {
+      background:
+        linear-gradient(100deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 58%) 130% 0 / 250% 100% no-repeat,
+        linear-gradient(180deg, #ffffff 0%, #f6f4ef 50%, #e4d6b0 82%, #c9ad6a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 0.02em 0.01em rgba(0, 0, 0, 0.35)) drop-shadow(0 0.1em 0.2em rgba(0, 0, 0, 0.45));
+    }
+
+    .poc-titulo__la {
+      margin-top: 0.26em;
+      padding: 0.1em 0.14em 0.06em;
+      font-size: 0.22em;
+      letter-spacing: 0.06em;
+      color: #fff;
+      background: var(--poc-sport);
+      border-radius: 0.08em;
+      transform: skewX(-10deg);
+      box-shadow: none;
+    }
+
+    .poc-titulo__tiros {
+      height: 0.012em;
+      min-height: 1px;
+      gap: 0.075em;
+      margin-top: 0.1em;
+      padding-left: 0.06em;
+      background: linear-gradient(90deg, rgba(201, 173, 106, 0.9), rgba(201, 173, 106, 0.35) 55%, rgba(201, 173, 106, 0));
+      transform: none;
+    }
+    .poc-titulo__tiros i {
+      width: 0.075em;
+      height: 0.075em;
+      margin-left: 0;
+      background: var(--poc-fondo, #060a14);
+      box-shadow: inset 0 0 0 0.012em rgba(255, 255, 255, 0.85);
+    }
+    .poc-titulo__tiros i:nth-child(5) {
+      background: #c9ad6a;
+      box-shadow: 0 0 0.12em rgba(201, 173, 106, 0.6);
+    }
+
+    /* ==========================================================
+       V4.14 · RENDIMIENTO Y MÓVIL
+       ========================================================== */
+    /* Tras el tiro en móvil: fuera las opciones que no cuentan y el
+       reloj, para que el veredicto suba y se lea sin desplazarse. */
+    @media (max-width: 767px) {
+      body[data-poc-tiro="resuelto"] .poc-opcion.is-apagada { display: none; }
+      body[data-poc-tiro="resuelto"] #poc-reloj { display: none; }
+      body[data-poc-tiro="resuelto"] .poc-veredicto { margin-top: 0.8rem; }
+    }
+
+    /* En táctil, sin desenfoque de fondo sobre el lienzo 3D (se
+       recalcula en cada fotograma) ni blur en la entrada de letras. */
+    @media (pointer: coarse) {
+      .poc-estadio .poc-chip {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(6, 10, 20, 0.86);
+      }
+      .poc-rotulo.is-golpe .poc-rotulo__letra { animation-name: poc-r-letra-ligera; }
+    }
+    @keyframes poc-r-letra-ligera {
+      0% { opacity: 0; transform: translateY(-0.6em) scale(2.4) rotate(-8deg); }
+      60% { opacity: 1; }
+      100% { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body class="fourty ft-brand-sport" data-poc-vista="cargando">
+  <a class="ft-skiplink" href="#poc-contenido">Saltar al juego</a>
+
+  <!-- V4.8: cabecera de marca SPORT, como en la sección de Juegos de sport.es -->
+  <div class="poc-sport" data-poc-date="2026-09-25">
+    <div class="poc-sport__dentro">
+      <a class="poc-sport__marca" href="https://www.sport.es/es/juegos/" aria-label="SPORT · Juegos"><svg class="poc-sport__logo" viewBox="0 0 242 60" role="img" aria-label="SPORT"><path fill="currentColor" d="M209.443 58.3958H229.522V19.3886H241.4V0.996254H197.488V5.90089C199.94 9.11956 200.783 14.9438 200.017 18.7756H199.327V19.3886H209.443V58.3958ZM170.359 26.5923V16.6298H174.574C178.1 16.6298 179.939 18.8522 179.939 21.611C179.939 24.3699 178.1 26.5923 174.574 26.5923H170.359ZM122.003 40.6165C116.332 40.6165 111.58 36.6315 111.58 29.811C111.58 22.9905 116.332 18.9288 122.003 18.9288C127.827 18.9288 132.502 22.9905 132.502 29.811C132.502 36.6315 127.827 40.6165 122.003 40.6165ZM68.1284 26.5923V16.6298H72.3434C75.8686 16.6298 77.7078 18.8522 77.7078 21.611C77.7078 24.3699 75.8686 26.5923 72.3434 26.5923H68.1284ZM122.003 59.5453C134.494 59.5453 145.223 52.7248 149.975 42.2258H150.281V58.3958H170.359V42.2258H170.743L179.786 58.3958H203.849L192.124 40.9997C191.281 39.7735 190.131 38.1642 187.832 37.6278V37.3212C195.879 34.1025 199.787 27.4353 199.787 20.0784C199.787 9.50273 191.664 0.996254 177.64 0.996254H150.281V11.8018C153.117 16.783 153.806 22.5307 152.81 27.3587H152.503C152.274 24.0634 151.431 20.998 150.281 18.0858C145.683 7.20368 134.801 0 122.003 0C112.423 0 103.84 4.06165 98.246 10.8055C100.162 15.4803 99.8553 21.3045 97.7861 25.2129H97.4796C98.1693 21.5344 97.7862 17.3195 96.2535 13.4877C93.3413 6.13079 86.1376 0.996254 75.6387 0.996254H48.0501V26.9755C51.5753 31.0371 51.8818 37.2446 50.0426 41.3062H49.7361C49.966 38.8539 49.7361 35.0222 48.0501 31.8801C44.2183 24.9064 35.0988 23.0671 28.4316 21.7643C24.0634 20.9213 20.8447 20.6148 20.8447 18.469C20.8447 17.3961 21.6877 16.6298 23.4503 16.6298H45.751V0.996254H24.14C10.1158 0.996254 0 6.28406 0 18.6223C0 32.953 12.9513 35.5586 21.5344 37.2446C23.9101 37.7044 25.9026 38.1642 27.2054 38.7006C28.125 39.0838 28.5848 39.6969 28.5848 40.6165C28.5848 41.9193 27.5886 42.7623 25.5961 42.7623H1.22616V58.3958H23.2204C34.7923 58.3958 43.8352 55.1771 47.7436 48.2034H48.0501V58.3958H68.1284V42.2258H75.6387C82.6124 42.2258 88.1302 39.9268 91.9619 36.2483H92.1918C95.1039 50.0426 107.366 59.5453 122.003 59.5453Z"/></svg></a>
+      <span class="poc-sport__seccion">
+        <svg class="poc-sport__icono" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"><path d="M21.5 6.5V2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v19.5a1 1 0 0 0 1 1h5" stroke-width="2"/><path d="M19.5 1v5.5M9.5.5v6M1 9h6M1 20h6" stroke-width="5"/><path d="m16 20 4-4m-9.8-6h3.49a.2.2 0 0 1 .14.05l7.96 7.55a3 3 0 1 1-4.19 4.19l-7.54-7.96a.2.2 0 0 1-.06-.14V10.2c0-.11.09-.2.2-.2Z" stroke-width="2"/></svg>
+        Juegos
+      </span>
+      <span class="poc-sport__juego">La tanda</span>
+    </div>
+  </div>
+
+  <main class="ft-layout-grid-flex">
+    <div class="ft-layout-grid-flex__row">
+      <div
+        class="ft-layout-grid-flex__colXs-12 ft-layout-grid-flex__colMd-10 ft-layout-grid-flex__colMdOffset-1" data-poc-date="2026-09-25">
+        <div id="poc-contenido" class="ft-layout-grid-flex__nested ft-helper-spacer-inner-md">
+
+          <!-- CABECERA: durante el juego se queda solo el título -->
+          <header class="poc-fila poc-bloque poc-cabecera" data-poc-date="2026-09-25">
+            <!-- V4.2: antetítulo de marca con franja blaugrana (solo colores, sin escudo) -->
+            <p class="poc-kicker"><span class="poc-kicker__franja" aria-hidden="true"></span>Trivial culé</p>
+            <!-- V4.12: título en grafismo de portada deportiva -->
+            <h1 class="ft-title poc-titulo" aria-label="La tanda">
+              <span class="poc-titulo__la" aria-hidden="true">La</span>
+              <span class="poc-titulo__palabra" aria-hidden="true">
+                <span class="poc-titulo__eco">Tanda</span>
+                <span class="poc-titulo__cara">Tanda</span>
+              </span>
+              <span class="poc-titulo__tiros" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+            </h1>
+            <p class="ft-text ft-helper-fontSize-body-S poc-cabecera__intro">
+              Cinco preguntas sobre el FC Barcelona. Aciertas, es gol. Fallas o se te acaba el tiempo, te la para el portero.
+            </p>
+            <p id="poc-aviso" class="ft-text ft-helper-fontSize-body-XS ft-helper-spacer-t-xs" role="status" hidden></p>
+          </header>
+
+          <!-- V3 · UI: todo el juego vive en un bloque «estadio de noche» con el
+               tema oscuro del DS (data-theme="dark"), a juego con la escena 3D. -->
+          <div class="poc-fila poc-estadio" data-theme="dark" data-poc-date="2026-09-25">
+
+            <!-- ESTADO: CARGANDO -->
+            <section id="poc-vista-cargando" class="poc-fila poc-bloque" aria-busy="true"
+              aria-label="Cargando la tanda de hoy" data-poc-date="2026-09-25">
+              <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-xs">Preparando la tanda de hoy…</p>
+              <div class="poc-esqueleto" aria-hidden="true">
+                <span class="poc-esqueleto__marcador"></span>
+                <span style="height: 2.4rem; width: 70%"></span>
+                <span class="poc-esqueleto__escena"></span>
+                <div class="poc-esqueleto__opciones"><span></span><span></span><span></span><span></span></div>
+              </div>
+            </section>
+
+            <!-- ESTADO: ERROR -->
+            <section id="poc-vista-error" class="poc-fila poc-bloque" hidden>
+              <h2 class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-xs" tabindex="-1">
+                No se puede jugar esta tanda
+              </h2>
+              <div class="ft-mol-advice">
+                <div class="ft-mol-advice__content">
+                  <span class="ft-mol-advice__title">Tanda no válida</span>
+                </div>
+              </div>
+              <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-sm">
+                Hay un problema con las preguntas de hoy y no se publica hasta corregirlo.
+              </p>
+              <ul id="poc-error-detalle" class="ft-list ft-helper-spacer-b-md"></ul>
+              <div class="poc-acciones">
+                <a class="ft-btn ft-btn--primary ft-btn--md" href="penaltis-V4.html">Volver a intentarlo</a>
+              </div>
+            </section>
+
+            <!-- ESTADO: VACÍO -->
+            <section id="poc-vista-vacio" class="poc-fila poc-bloque" hidden>
+              <h2 class="ft-title ft-helper-fontSize-heading-S ft-helper-spacer-b-xs" tabindex="-1">
+                Hoy todavía no hay tanda
+              </h2>
+              <div class="ft-mol-advice">
+                <div class="ft-mol-advice__content">
+                  <span class="ft-mol-advice__title">Sin tanda</span>
+                </div>
+              </div>
+              <p class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-md">
+                La redacción aún no ha publicado tandas. Vuelve en un rato.
+              </p>
+              <div class="poc-acciones">
+                <a class="ft-btn ft-btn--primary ft-btn--md" href="penaltis-V4.html">Volver a mirar</a>
+              </div>
+            </section>
+
+            <!-- ESTADO: ENTRADA
+                 V4: la fecha sube al antetítulo; quien ya ha jugado ve su racha
+                 y sus números en lugar de las reglas. -->
+            <section id="poc-vista-entrada" class="poc-fila poc-bloque" aria-labelledby="poc-entrada-titulo"
+              data-poc-date="2026-09-25" hidden>
+              <p class="poc-eyebrow">Tanda culé · <span id="poc-entrada-fecha">1 de 5 seguidas</span></p>
+              <h2 id="poc-entrada-titulo" class="ft-title poc-entrada__titulo" tabindex="-1">
+                Tanda <span id="poc-entrada-numero">#0</span>
+              </h2>
+
+              <!-- Explicación visual: cada respuesta es una esquina y el balón va ahí -->
+              <svg class="poc-esquema" viewBox="0 0 320 190" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="poc-esquema-cielo" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#0b1428" /><stop offset="1" stop-color="#1b2e52" />
+                  </linearGradient>
+                  <radialGradient id="poc-esquema-foco" cx="0.5" cy="0" r="0.8">
+                    <stop offset="0" stop-color="#f7c948" stop-opacity="0.35" /><stop offset="1" stop-color="#f7c948" stop-opacity="0" />
+                  </radialGradient>
+                </defs>
+                <rect width="320" height="120" fill="url(#poc-esquema-cielo)" />
+                <rect width="320" height="120" fill="url(#poc-esquema-foco)" />
+                <rect y="118" width="320" height="72" fill="#2f7d32" />
+                <rect y="136" width="320" height="18" fill="#378a3a" />
+                <rect y="172" width="320" height="18" fill="#378a3a" />
+                <path d="M0 118H320M34 118L18 146H302L286 118" fill="none" stroke="#f5f5f0" stroke-opacity="0.85" stroke-width="1.5" />
+                <path class="poc-esquema__red" d="M58 32V118M74 32V118M90 32V118M106 32V118M122 32V118M138 32V118M154 32V118M170 32V118M186 32V118M202 32V118M218 32V118M234 32V118M250 32V118M266 32V118M44 46H278M44 60H278M44 74H278M44 88H278M44 102H278" />
+                <rect x="40" y="28" width="5" height="92" fill="#fff" />
+                <rect x="277" y="28" width="5" height="92" fill="#fff" />
+                <rect x="40" y="28" width="242" height="5" fill="#fff" />
+                <g class="poc-esquema__arcos">
+                  <path d="M160 170 Q118 92 86 58" /><path d="M160 170 Q202 92 234 58" />
+                  <path d="M160 170 Q116 124 86 98" /><path d="M160 170 Q204 124 234 98" />
+                </g>
+                <g class="poc-esquema__dianas">
+                  <circle cx="86" cy="58" r="16" /><text x="86" y="58">A</text>
+                  <circle cx="234" cy="58" r="16" /><text x="234" y="58">B</text>
+                  <circle cx="86" cy="98" r="16" /><text x="86" y="98">C</text>
+                  <circle cx="234" cy="98" r="16" /><text x="234" y="98">D</text>
+                </g>
+                <circle cx="160" cy="172" r="7" fill="#fff" stroke="#0b0f19" stroke-width="1.2" />
+                <path d="M160 168.6 l3 2.2 -1.1 3.4 h-3.8 l-1.1 -3.4 Z" fill="#0b0f19" />
+              </svg>
+
+              <ul id="poc-reglas" class="poc-reglas" aria-label="Cómo se juega">
+                <li><strong>5</strong> preguntas</li>
+                <li><strong>4</strong> esquinas</li>
+                <li><strong><span id="poc-regla-segundos">15</span> s</strong> y bajando</li>
+              </ul>
+              <!-- V4: cifras del jugador (sustituyen a las reglas si ya ha jugado) -->
+              <ul id="poc-entrada-cifras" class="poc-reglas" aria-label="Tus números" hidden></ul>
+              <p id="poc-racha-nota" class="ft-text poc-racha-nota" hidden></p>
+              <!-- V4.5: progreso hacia el bloque perfecto (5 plenos seguidos) -->
+              <div id="poc-plenos-entrada" class="poc-plenos" hidden>
+                <ol class="poc-plenos__lista" data-poc-plenos-lista aria-hidden="true"></ol>
+                <p class="ft-text poc-plenos__texto" data-poc-plenos-texto></p>
+              </div>
+
+              <p class="ft-text ft-helper-fontSize-body-M poc-entrada__texto">
+                Cada respuesta es una esquina de la portería. Elige una y tu jugador chuta ahí.
+                Cada penalti tienes menos tiempo: si no chutas, la para el portero.
+                Cuanto antes marques, más puntos sumas al ranking.
+              </p>
+
+              <!-- Solo al volver a una tanda a medias -->
+              <div id="poc-progreso" class="poc-progreso" hidden>
+                <ol id="poc-progreso-tanda" class="poc-tanda" aria-label="Tu tanda hasta ahora"></ol>
+                <p id="poc-progreso-texto" class="ft-text ft-helper-fontSize-body-S"></p>
+              </div>
+
+              <div class="poc-acciones ft-helper-spacer-b-sm">
+                <button id="poc-empezar" type="button" class="ft-btn ft-btn--primary ft-btn--md">Empezar la tanda</button>
+              </div>
+              <!-- V4.4: descanso / máximo diario / sin tandas, con cuenta atrás -->
+              <div id="poc-descanso-entrada" class="poc-descanso" role="status" hidden>
+                <p class="poc-descanso__titulo" data-poc-descanso-titulo>Descanso en el vestuario</p>
+                <p class="ft-text poc-descanso__texto" data-poc-descanso-texto></p>
+                <p class="poc-descanso__cuenta" data-poc-descanso-cuenta aria-hidden="true">60:00</p>
+                <span class="poc-descanso__pista" aria-hidden="true"><span class="poc-descanso__barra" data-poc-descanso-barra></span></span>
+              </div>
+              <p id="poc-limite-entrada" class="ft-text poc-limite"></p>
+              <p class="ft-text ft-helper-fontSize-body-XS poc-ayuda-teclado">
+                Con teclado: <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> para chutar,
+                <kbd>Intro</kbd> para el siguiente penalti.
+              </p>
+            </section>
+
+            <!-- ESTADO: JUEGO -->
+            <section id="poc-vista-juego" class="poc-fila poc-bloque poc-juego ft-org-game" aria-labelledby="poc-pregunta"
+              data-poc-date="2026-09-25" hidden>
+
+              <!-- Marcador: tú contra el portero + los cinco tiros -->
+              <div class="poc-marcador">
+                <p class="poc-marcador__resultado">
+                  <span>Tú</span>
+                  <span id="poc-goles" class="poc-marcador__num">0</span>
+                  <span aria-hidden="true">–</span><span class="poc-sr">, </span>
+                  <span id="poc-paradas" class="poc-marcador__num">0</span>
+                  <span>Portero</span>
+                </p>
+                <ol id="poc-tanda" class="poc-tanda" aria-label="Marcador de la tanda"></ol>
+              </div>
+
+              <h2 id="poc-pregunta" class="poc-pregunta ft-title ft-helper-fontSize-heading-XS" tabindex="-1">
+                <span id="poc-numero-tiro" class="poc-antetitulo">Penalti 1 de 5</span>
+                <span id="poc-pregunta-texto"></span>
+                <span id="poc-tiempo-sr" class="poc-sr"></span>
+              </h2>
+
+              <div id="poc-escena" class="poc-escena" data-poc-date="2026-09-25">
+                <!-- V3: el SVG es la portada ligera y la escena de reserva (sin WebGL,
+                     o mientras se descarga el 3D). La capa 3D se monta encima. -->
+                <svg viewBox="0 0 360 260" focusable="false" aria-hidden="true">
+                  <!-- grada -->
+                  <rect class="poc-grada" x="0" y="0" width="360" height="110" />
+                  <g class="poc-grada-puntos" id="poc-grada-puntos">
+                    <circle cx="12" cy="14" r="3" /><circle cx="36" cy="22" r="3" /><circle cx="60" cy="12" r="3" />
+                    <circle cx="84" cy="26" r="3" /><circle cx="108" cy="16" r="3" /><circle cx="132" cy="24" r="3" />
+                    <circle cx="156" cy="12" r="3" /><circle cx="180" cy="22" r="3" /><circle cx="204" cy="14" r="3" />
+                    <circle cx="228" cy="26" r="3" /><circle cx="252" cy="16" r="3" /><circle cx="276" cy="24" r="3" />
+                    <circle cx="300" cy="12" r="3" /><circle cx="324" cy="22" r="3" /><circle cx="348" cy="14" r="3" />
+                  </g>
+                  <!-- césped -->
+                  <rect class="poc-cesped" x="0" y="110" width="360" height="150" />
+                  <rect class="poc-cesped-franja" x="0" y="150" width="360" height="30" />
+                  <rect class="poc-cesped-franja" x="0" y="210" width="360" height="30" />
+                  <!-- área pequeña y punto de penalti -->
+                  <path class="poc-linea" d="M0 150 H360 M40 150 L20 185 H340 L320 150" />
+                  <ellipse class="poc-punto" cx="180" cy="222" rx="4" ry="2" />
+
+                  <!-- red -->
+                  <g class="poc-red-grupo" id="poc-red">
+                    <rect x="56" y="36" width="248" height="114" fill="var(--color-white)" fill-opacity="0.08" />
+                    <path class="poc-red"
+                      d="M72 36V150M88 36V150M104 36V150M120 36V150M136 36V150M152 36V150M168 36V150M184 36V150M200 36V150M216 36V150M232 36V150M248 36V150M264 36V150M280 36V150M296 36V150
+                       M56 50H304M56 64H304M56 78H304M56 92H304M56 106H304M56 120H304M56 134H304" />
+                  </g>
+                  <!-- postes -->
+                  <rect class="poc-poste" x="52" y="32" width="6" height="120" />
+                  <rect class="poc-poste" x="302" y="32" width="6" height="120" />
+                  <rect class="poc-poste" x="52" y="30" width="256" height="6" />
+
+                  <!-- trayectoria prevista (V2) -->
+                  <path class="poc-trayectoria" id="poc-trayectoria" d="M180 216 L180 216" />
+
+                  <!-- dianas A-D -->
+                  <g class="poc-diana" data-poc-diana="A"><circle cx="92" cy="66" r="18" /><text x="92" y="66">A</text></g>
+                  <g class="poc-diana" data-poc-diana="B"><circle cx="268" cy="66" r="18" /><text x="268" y="66">B</text></g>
+                  <g class="poc-diana" data-poc-diana="C"><circle cx="92" cy="124" r="18" /><text x="92" y="124">C</text></g>
+                  <g class="poc-diana" data-poc-diana="D"><circle cx="268" cy="124" r="18" /><text x="268" y="124">D</text></g>
+
+                  <!-- onda de impacto (V2) -->
+                  <circle class="poc-impacto" id="poc-impacto" cx="92" cy="66" r="18" />
+
+                  <!-- portero: pies en (180,150) -->
+                  <g class="poc-portero" id="poc-portero">
+                    <ellipse class="poc-sombra" cx="180" cy="151" rx="16" ry="3" />
+                    <rect class="poc-pantalon" x="171" y="126" width="7" height="24" rx="3" />
+                    <rect class="poc-pantalon" x="182" y="126" width="7" height="24" rx="3" />
+                    <rect class="poc-camiseta-portero" x="167" y="96" width="26" height="34" rx="7" />
+                    <path class="poc-camiseta-portero" d="M169 102 L148 82 L153 77 L173 96 Z M191 102 L212 82 L207 77 L187 96 Z" />
+                    <circle class="poc-guante" cx="149" cy="78" r="5" />
+                    <circle class="poc-guante" cx="211" cy="78" r="5" />
+                    <circle class="poc-piel" cx="180" cy="87" r="9" />
+                  </g>
+
+                  <!-- estela del balón (V2) -->
+                  <g class="poc-balon poc-balon--estela" data-poc-estela="2">
+                    <circle cx="180" cy="216" r="8" />
+                  </g>
+                  <g class="poc-balon poc-balon--estela" data-poc-estela="1">
+                    <circle cx="180" cy="216" r="8" />
+                  </g>
+                  <!-- balón -->
+                  <g class="poc-balon" id="poc-balon">
+                    <circle cx="180" cy="216" r="8" />
+                    <path d="M180 212 l3.5 2.5 -1.3 4 h-4.4 l-1.3 -4 Z" />
+                  </g>
+
+                  <!-- lanzador, de espaldas: pies en (150,258) -->
+                  <g class="poc-lanzador" id="poc-lanzador">
+                    <ellipse class="poc-sombra" cx="150" cy="258" rx="18" ry="3" />
+                    <rect class="poc-piel" x="140" y="236" width="8" height="22" rx="3" />
+                    <rect class="poc-piel" x="153" y="236" width="8" height="22" rx="3" />
+                    <rect class="poc-pantalon" x="137" y="226" width="27" height="14" rx="3" />
+                    <rect class="poc-camiseta-lanzador" x="134" y="194" width="33" height="36" rx="8" />
+                    <text x="150.5" y="217" fill="var(--color-white)" font-size="14" font-weight="bold" text-anchor="middle">9</text>
+                    <circle class="poc-pantalon" cx="150.5" cy="185" r="10" />
+                  </g>
+                </svg>
+                <div id="poc-escena3d" class="poc-escena3d" aria-hidden="true"></div>
+                <div id="poc-destello" class="poc-destello" aria-hidden="true"></div>
+                <p class="poc-chip poc-chip--carga" aria-hidden="true">Cargando estadio…</p>
+                <p class="poc-chip poc-chip--repeticion" aria-hidden="true">Repetición</p>
+                <div id="poc-rotulo" class="poc-rotulo" aria-hidden="true">
+                  <span class="poc-rotulo__velo"></span>
+                  <span class="poc-rotulo__rayos"></span>
+                  <span class="poc-rotulo__flash"></span>
+                  <span class="poc-rotulo__banda"></span>
+                  <span class="poc-rotulo__confeti"></span>
+                  <span class="poc-rotulo__bloque">
+                    <span class="poc-rotulo__marca"><svg viewBox="0 0 242 60"><path fill="currentColor" d="M209.443 58.3958H229.522V19.3886H241.4V0.996254H197.488V5.90089C199.94 9.11956 200.783 14.9438 200.017 18.7756H199.327V19.3886H209.443V58.3958ZM170.359 26.5923V16.6298H174.574C178.1 16.6298 179.939 18.8522 179.939 21.611C179.939 24.3699 178.1 26.5923 174.574 26.5923H170.359ZM122.003 40.6165C116.332 40.6165 111.58 36.6315 111.58 29.811C111.58 22.9905 116.332 18.9288 122.003 18.9288C127.827 18.9288 132.502 22.9905 132.502 29.811C132.502 36.6315 127.827 40.6165 122.003 40.6165ZM68.1284 26.5923V16.6298H72.3434C75.8686 16.6298 77.7078 18.8522 77.7078 21.611C77.7078 24.3699 75.8686 26.5923 72.3434 26.5923H68.1284ZM122.003 59.5453C134.494 59.5453 145.223 52.7248 149.975 42.2258H150.281V58.3958H170.359V42.2258H170.743L179.786 58.3958H203.849L192.124 40.9997C191.281 39.7735 190.131 38.1642 187.832 37.6278V37.3212C195.879 34.1025 199.787 27.4353 199.787 20.0784C199.787 9.50273 191.664 0.996254 177.64 0.996254H150.281V11.8018C153.117 16.783 153.806 22.5307 152.81 27.3587H152.503C152.274 24.0634 151.431 20.998 150.281 18.0858C145.683 7.20368 134.801 0 122.003 0C112.423 0 103.84 4.06165 98.246 10.8055C100.162 15.4803 99.8553 21.3045 97.7861 25.2129H97.4796C98.1693 21.5344 97.7862 17.3195 96.2535 13.4877C93.3413 6.13079 86.1376 0.996254 75.6387 0.996254H48.0501V26.9755C51.5753 31.0371 51.8818 37.2446 50.0426 41.3062H49.7361C49.966 38.8539 49.7361 35.0222 48.0501 31.8801C44.2183 24.9064 35.0988 23.0671 28.4316 21.7643C24.0634 20.9213 20.8447 20.6148 20.8447 18.469C20.8447 17.3961 21.6877 16.6298 23.4503 16.6298H45.751V0.996254H24.14C10.1158 0.996254 0 6.28406 0 18.6223C0 32.953 12.9513 35.5586 21.5344 37.2446C23.9101 37.7044 25.9026 38.1642 27.2054 38.7006C28.125 39.0838 28.5848 39.6969 28.5848 40.6165C28.5848 41.9193 27.5886 42.7623 25.5961 42.7623H1.22616V58.3958H23.2204C34.7923 58.3958 43.8352 55.1771 47.7436 48.2034H48.0501V58.3958H68.1284V42.2258H75.6387C82.6124 42.2258 88.1302 39.9268 91.9619 36.2483H92.1918C95.1039 50.0426 107.366 59.5453 122.003 59.5453Z"/></svg></span>
+                    <span class="poc-rotulo__palabra"></span>
+                    <span class="poc-rotulo__sub"></span>
+                  </span>
+                </div>
+                <button id="poc-sonido" type="button" class="poc-sonido" aria-pressed="false" hidden>
+                  <span class="poc-sonido__icono" aria-hidden="true"></span>
+                  <span class="poc-sr">Sonido del estadio</span>
+                </button>
+              </div>
+
+              <!-- V4.1: reloj del penalti (visual; el lector recibe «Tienes N segundos» y el aviso de 5 s) -->
+              <div id="poc-reloj" class="poc-reloj" aria-hidden="true">
+                <svg class="poc-reloj__icono" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M9.5 2.5h5" /></svg>
+                <span class="poc-reloj__pista"><span id="poc-reloj-barra" class="poc-reloj__barra"></span></span>
+                <span class="poc-reloj__num"><span id="poc-reloj-num">15</span> s</span>
+              </div>
+
+              <!-- Opciones: el orden del DOM (A, B, C, D) coincide con la lectura
+                   y con la posición de las esquinas en la portería. -->
+              <div id="poc-opciones" class="poc-opciones" role="group"
+                aria-label="Respuestas. Cada una es una esquina de la portería."></div>
+
+              <!-- Anuncio para lector de pantalla: la región existe siempre y solo cambia su texto. -->
+              <p id="poc-anuncio" class="poc-sr" role="status" aria-live="polite"></p>
+
+              <!-- Veredicto visible tras el tiro: solo lo que no dice ya la escena -->
+              <div id="poc-veredicto" class="poc-veredicto" hidden>
+                <p id="poc-veredicto-titulo" class="ft-text ft-helper-fontSize-body-S poc-veredicto__titulo"></p>
+                <p id="poc-veredicto-dato" class="ft-text ft-helper-fontSize-body-S"></p>
+                <!-- V4.1: puntos del tiro -->
+                <p class="ft-text poc-veredicto__puntos">
+                  <span id="poc-veredicto-puntos"></span>
+                  <span id="poc-veredicto-llevas" class="poc-veredicto__llevas"></span>
+                </p>
+              </div>
+
+              <p id="poc-ayuda-teclado" class="ft-text ft-helper-fontSize-body-XS poc-ayuda-teclado">
+                Pulsa <kbd>A</kbd>, <kbd>B</kbd>, <kbd>C</kbd> o <kbd>D</kbd>, o muévete con las flechas.
+              </p>
+              <!-- V4: qué está pasando mientras vuela el balón (visual; el lector ya tiene #poc-anuncio) -->
+              <p id="poc-estado-tiro" class="ft-text poc-estado-tiro" aria-hidden="true" hidden></p>
+
+              <div id="poc-acciones-juego" class="poc-acciones poc-acciones--pegajosa" hidden>
+                <button id="poc-siguiente" type="button" class="ft-btn ft-btn--primary ft-btn--md">
+                  Siguiente penalti
+                </button>
+              </div>
+            </section>
+
+            <!-- ESTADO: RESULTADO (éxito de la tanda) -->
+            <section id="poc-vista-resultado" class="poc-fila poc-bloque" aria-labelledby="poc-resultado-titulo"
+              data-poc-date="2026-09-25" hidden>
+              <p id="poc-resultado-previo" class="ft-text ft-helper-fontSize-body-S ft-helper-spacer-b-xs" hidden>
+                Tu última tanda. Así quedó.
+              </p>
+
+              <!-- Tarjeta: lo que se ve y lo que se comparte son lo mismo -->
+              <div class="poc-tarjeta">
+                <p class="poc-tarjeta__final">Final</p>
+                <p id="poc-tarjeta-antetitulo" class="poc-tarjeta__antetitulo">Tanda #0</p>
+                <h2 id="poc-resultado-titulo" class="ft-title poc-tarjeta__marcador" tabindex="-1"></h2>
+                <ol id="poc-resultado-tanda" class="poc-tanda poc-tanda--grande" aria-label="Tu tanda"></ol>
+                <p id="poc-resultado-frase" class="poc-tarjeta__frase"></p>
+                <p id="poc-resultado-puntos" class="poc-tarjeta__puntos"></p>
+                <p id="poc-resultado-bonus" class="poc-tarjeta__bonus" hidden></p>
+              </div>
+
+              <p id="poc-resultado-nota" class="ft-text poc-resultado-nota" hidden></p>
+
+              <div class="poc-acciones poc-acciones--resultado">
+                <!-- V4.4: seguir jugando mientras lo permitan los límites -->
+                <button id="poc-otra" type="button" class="ft-btn ft-btn--primary ft-btn--md">Jugar otra tanda</button>
+                <button id="poc-compartir" type="button" class="ft-btn ft-btn--md poc-btn-sec">Compartir resultado</button>
+              </div>
+              <p id="poc-limite-resultado" class="ft-text poc-limite"></p>
+              <!-- V4.5: progreso hacia el bloque perfecto (5 plenos seguidos) -->
+              <div id="poc-plenos-resultado" class="poc-plenos" hidden>
+                <ol class="poc-plenos__lista" data-poc-plenos-lista aria-hidden="true"></ol>
+                <p class="ft-text poc-plenos__texto" data-poc-plenos-texto></p>
+              </div>
+              <!-- V4.4: descanso / máximo diario / sin tandas, con cuenta atrás -->
+              <div id="poc-descanso-resultado" class="poc-descanso" role="status" hidden>
+                <p class="poc-descanso__titulo" data-poc-descanso-titulo>Descanso en el vestuario</p>
+                <p class="ft-text poc-descanso__texto" data-poc-descanso-texto></p>
+                <p class="poc-descanso__cuenta" data-poc-descanso-cuenta aria-hidden="true">60:00</p>
+                <span class="poc-descanso__pista" aria-hidden="true"><span class="poc-descanso__barra" data-poc-descanso-barra></span></span>
+              </div>
+              <p id="poc-compartir-estado" class="ft-text ft-helper-fontSize-body-XS poc-compartir-estado"
+                role="status" aria-live="polite"></p>
+              <!-- Solo si el navegador no deja copiar: texto seleccionable a mano -->
+              <label id="poc-compartir-manual" class="ft-text ft-helper-fontSize-body-XS" hidden>
+                Texto para compartir
+                <textarea id="poc-compartir-salida" class="poc-compartir-salida" readonly rows="4"></textarea>
+              </label>
+
+              <!-- V4.1: ranking personal y evolución -->
+              <section class="poc-ranking" aria-labelledby="poc-ranking-titulo">
+                <div class="poc-ranking__cabecera">
+                  <h3 id="poc-ranking-titulo" class="poc-ranking__titulo">Tu ranking</h3>
+                  <p class="poc-ranking__division"><span class="poc-sr">División: </span><span id="poc-division">Cantera</span></p>
+                </div>
+                <p class="poc-ranking__total">
+                  <strong id="poc-puntos-total">0</strong> pts
+                  <span id="poc-puntos-hoy" class="poc-ranking__hoy">+0 hoy</span>
+                </p>
+                <span class="poc-ranking__pista" aria-hidden="true"><span id="poc-division-barra" class="poc-ranking__barra"></span></span>
+                <p id="poc-division-siguiente" class="ft-text poc-ranking__siguiente"></p>
+                <figure class="poc-evolucion">
+                  <figcaption class="poc-evolucion__titulo">Puntos por tanda</figcaption>
+                  <div id="poc-evolucion"></div>
+                </figure>
+                <p id="poc-ranking-puesto" class="ft-text poc-ranking__puesto"></p>
+                <!-- V4: racha y números del jugador -->
+                <ul id="poc-resultado-cifras" class="poc-reglas poc-reglas--resultado" aria-label="Tus números"></ul>
+              </section>
+
+              <details class="poc-repaso-plegable">
+                <summary><span>Repaso de la tanda <span id="poc-repaso-resumen" class="poc-resumen"></span></span></summary>
+                <ol id="poc-repaso" class="poc-repaso"></ol>
+              </details>
+
+            </section>
+
+          </div>
+
+          <!-- PIE DEL POC: no forma parte del producto -->
+          <footer class="poc-fila poc-bloque poc-pie ft-helper-spacer-t-lg" data-poc-date="2026-09-25">
+            <p class="ft-text ft-helper-fontSize-body-XS">
+              <strong class="poc-pie__etiqueta">Revisión</strong>
+              POC V4.5 (bonus de bloque perfecto). Preguntas en <code>penaltis-barca.json</code>. Estados:
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=cargando">cargando</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=error">error</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=vacio">vacío</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=entrada">entrada</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=seguir">seguir tanda</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=juego">penalti</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=gol">gol</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=parada">parada</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=tiempo">sin tiempo</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=resultado">resultado</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=jugado">última tanda</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=plenos">plenos en curso</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=perfecto">bloque perfecto</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=descanso">descanso</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=limite">máximo diario</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;estado=agotadas">sin tandas</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;reiniciar=1">borrar partidas</a> ·
+              <a class="ft-link" href="penaltis-V4.html?revision=1&amp;escena=2d">sin 3D</a> ·
+              <a class="ft-link" href="penaltis-V3.html">ver V3</a> ·
+              <a class="ft-link" href="penaltis-V2.html">ver V2</a>
+            </p>
+            <!-- V4: aviso de entorno si el DS no carga en local -->
+            <p id="poc-aviso-ds" class="ft-text ft-helper-fontSize-body-XS poc-aviso-ds" role="note" hidden></p>
+          </footer>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="penaltis-V4.juego.js"></script>
+</body>
+
+</html>

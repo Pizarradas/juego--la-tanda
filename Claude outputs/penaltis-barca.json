@@ -1,0 +1,319 @@
+{
+  "_leeme": "Preguntas de la Tanda de penaltis (FC Barcelona). Las tandas se juegan en orden de 'numero' (la fecha es solo informativa); config.limites fija cuántas seguidas, la espera en minutos y el máximo al día. Cada tanda: numero y exactamente 5 preguntas. Cada pregunta: 4 opciones en orden A, B, C, D (A arriba izquierda, B arriba derecha, C abajo izquierda, D abajo derecha), 'correcta' es el índice 0-3 y 'dato' se enseña tras el tiro. Reparte las correctas entre las cuatro esquinas. 'equipaciones' en una tanda sustituye a la de por defecto.",
+  "version": 1,
+  "config": {
+    "segundosPorPenalti": [15, 13, 11, 9, 7],
+    "limites": {
+      "tandasSeguidas": 5,
+      "esperaMinutos": 60,
+      "maximoDiario": 15
+    },
+    "puntos": {
+      "gol": 100,
+      "porSegundoSobrante": 10,
+      "pleno": 200,
+      "bloquePerfecto": 1000
+    },
+    "divisiones": [
+      { "nombre": "Cantera", "desde": 0 },
+      { "nombre": "Juvenil A", "desde": 1000 },
+      { "nombre": "Barça Atlètic", "desde": 2500 },
+      { "nombre": "Primer equipo", "desde": 5000 },
+      { "nombre": "Leyenda culé", "desde": 10000 }
+    ]
+  },
+  "equipaciones": {
+    "lanzador": { "patron": "rayas", "rayas": ["#a50044", "#004d98"], "mangas": "#004d98", "camiseta": "#a50044", "detalle": "#004d98", "pantalon": "#0a2a66", "medias": "#0a2a66", "dorsal": "10", "colorDorsal": "#f7d117" },
+    "portero": { "camiseta": "#f2c200", "detalle": "#111111", "pantalon": "#111111", "medias": "#f2c200", "dorsal": "1", "colorDorsal": "#111111", "guantes": "#ffffff" }
+  },
+  "tandas": [
+    {
+      "fecha": "2026-09-24",
+      "numero": 11,
+      "preguntas": [
+        {
+          "pregunta": "¿En qué año se fundó el FC Barcelona?",
+          "opciones": ["1899", "1902", "1909", "1919"],
+          "correcta": 0,
+          "dato": "Joan Gamper lo fundó el 29 de noviembre de 1899 en el Gimnasio Solé."
+        },
+        {
+          "pregunta": "¿Contra qué equipo ganó el Barça su primera Copa de Europa, en Wembley en 1992?",
+          "opciones": ["Benfica", "Sampdoria", "Juventus", "Steaua de Bucarest"],
+          "correcta": 1,
+          "dato": "Ganó 1-0 en la prórroga con un gol de falta de Ronald Koeman."
+        },
+        {
+          "pregunta": "¿Quién fundó el FC Barcelona?",
+          "opciones": ["Joan Gamper", "Joan Laporta", "Josep Sunyol", "Agustí Montal"],
+          "correcta": 0,
+          "dato": "Hans Gamper, suizo, puso un anuncio en Los Deportes buscando jugadores. Luego catalanizó su nombre como Joan."
+        },
+        {
+          "pregunta": "¿Cómo se llama el estadio del Barça inaugurado en 1957?",
+          "opciones": ["Les Corts", "Montjuïc", "Mini Estadi", "Camp Nou"],
+          "correcta": 3,
+          "dato": "El Camp Nou se inauguró el 24 de septiembre de 1957, día de la Mercè."
+        },
+        {
+          "pregunta": "¿Cuál es el lema del club?",
+          "opciones": ["Més que un club", "Força Barça", "Tot el camp és un clam", "Visca el Barça"],
+          "correcta": 0,
+          "dato": "«Més que un club» lo popularizó el presidente Narcís de Carreras en 1968. «Tot el camp és un clam» es un verso del himno."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-25",
+      "numero": 12,
+      "preguntas": [
+        {
+          "pregunta": "¿Quién marcó el gol de la final de Wembley de 1992?",
+          "opciones": ["Hristo Stoichkov", "Michael Laudrup", "Ronald Koeman", "José Mari Bakero"],
+          "correcta": 2,
+          "dato": "Koeman marcó de falta en el minuto 112 de la prórroga ante la Sampdoria."
+        },
+        {
+          "pregunta": "¿Qué entrenador ganó el triplete de 2009?",
+          "opciones": ["Frank Rijkaard", "Pep Guardiola", "Luis Enrique", "Tito Vilanova"],
+          "correcta": 1,
+          "dato": "Guardiola ganó Liga, Copa y Champions en su primera temporada. Ese año natural sumó seis títulos."
+        },
+        {
+          "pregunta": "¿Cuántas Copas de Europa ha ganado el Barça masculino?",
+          "opciones": ["Dos", "Tres", "Cuatro", "Cinco"],
+          "correcta": 3,
+          "dato": "Cinco: 1992, 2006, 2009, 2011 y 2015."
+        },
+        {
+          "pregunta": "¿Cómo se llama la residencia histórica de la cantera azulgrana?",
+          "opciones": ["La Masia", "La Fábrica", "Lezama", "Zubieta"],
+          "correcta": 0,
+          "dato": "La Masia de Can Planes fue residencia de canteranos desde 1979. La Fábrica, Lezama y Zubieta son las canteras del Madrid, el Athletic y la Real."
+        },
+        {
+          "pregunta": "¿Quién es el máximo goleador de la historia del Barça?",
+          "opciones": ["César Rodríguez", "Lionel Messi", "László Kubala", "Luis Suárez"],
+          "correcta": 1,
+          "dato": "Messi marcó 672 goles oficiales con el Barça entre 2004 y 2021."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-26",
+      "numero": 13,
+      "preguntas": [
+        {
+          "pregunta": "¿En qué estadio jugaba el Barça antes del Camp Nou?",
+          "opciones": ["Les Corts", "Sarrià", "Montjuïc", "Mestalla"],
+          "correcta": 0,
+          "dato": "Les Corts fue su casa de 1922 a 1957."
+        },
+        {
+          "pregunta": "¿Dónde jugó el Barça mientras se reformaba el Camp Nou, desde 2023?",
+          "opciones": ["Estadi Johan Cruyff", "RCDE Stadium", "Estadi Olímpic de Montjuïc", "Les Corts"],
+          "correcta": 2,
+          "dato": "El Estadi Olímpic Lluís Companys, en Montjuïc, fue su casa desde la temporada 2023-24."
+        },
+        {
+          "pregunta": "¿Contra quién ganó el Barça la final de la Champions de 2006, en París?",
+          "opciones": ["AC Milan", "Juventus", "Manchester United", "Arsenal"],
+          "correcta": 3,
+          "dato": "Ganó 2-1 en Saint-Denis con goles de Eto'o y Belletti."
+        },
+        {
+          "pregunta": "¿Qué entrenador neerlandés formó el Dream Team?",
+          "opciones": ["Johan Cruyff", "Louis van Gaal", "Rinus Michels", "Frank Rijkaard"],
+          "correcta": 0,
+          "dato": "Cruyff entrenó al Barça de 1988 a 1996: cuatro Ligas seguidas y la Copa de Europa de 1992."
+        },
+        {
+          "pregunta": "¿Con qué dorsal debutó Messi en el primer equipo?",
+          "opciones": ["19", "10", "30", "11"],
+          "correcta": 2,
+          "dato": "Debutó con el 30 en 2004, pasó al 19 y desde 2008-09 llevó el 10."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-27",
+      "numero": 14,
+      "preguntas": [
+        {
+          "pregunta": "¿Con qué club juega el Barça el derbi barcelonés?",
+          "opciones": ["RCD Espanyol", "Girona FC", "CE Sabadell", "CE Europa"],
+          "correcta": 0,
+          "dato": "El RCD Espanyol, fundado en 1900. Se enfrentan en Liga desde su primera edición, en 1929."
+        },
+        {
+          "pregunta": "¿Qué estrella húngara llenaba tanto Les Corts que hizo falta un estadio mayor?",
+          "opciones": ["Ferenc Puskás", "Sándor Kocsis", "László Kubala", "Zoltán Czibor"],
+          "correcta": 2,
+          "dato": "Por eso se dice que el Camp Nou es «la casa que construyó Kubala»."
+        },
+        {
+          "pregunta": "¿Contra qué equipo ganó el Barça la final de la Champions de 2011?",
+          "opciones": ["Chelsea", "Arsenal", "Bayern de Múnich", "Manchester United"],
+          "correcta": 3,
+          "dato": "Ganó 3-1 en Wembley con goles de Pedro, Messi y Villa."
+        },
+        {
+          "pregunta": "¿Contra quién ganó el Barça el Mundial de Clubes de 2009?",
+          "opciones": ["Boca Juniors", "Estudiantes de La Plata", "River Plate", "Santos"],
+          "correcta": 1,
+          "dato": "Ganó 2-1 en la prórroga en Abu Dabi. Messi marcó el gol del título con el pecho."
+        },
+        {
+          "pregunta": "¿Qué portero alemán fichó el Barça en 2014?",
+          "opciones": ["Bernd Leno", "Kevin Trapp", "Manuel Neuer", "Marc-André ter Stegen"],
+          "correcta": 3,
+          "dato": "Llegó del Borussia Mönchengladbach y acabó siendo capitán."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-28",
+      "numero": 15,
+      "preguntas": [
+        {
+          "pregunta": "¿Contra qué equipo ganó el Barça la final de la Champions de 2015, en Berlín?",
+          "opciones": ["Bayern de Múnich", "Juventus", "Real Madrid", "Atlético de Madrid"],
+          "correcta": 1,
+          "dato": "Ganó 3-1 con goles de Rakitić, Suárez y Neymar."
+        },
+        {
+          "pregunta": "¿Quién completaba la «MSN» junto a Messi y Suárez?",
+          "opciones": ["Pedro", "Alexis Sánchez", "Neymar", "David Villa"],
+          "correcta": 2,
+          "dato": "Entre 2014 y 2017 superaron juntos los 350 goles."
+        },
+        {
+          "pregunta": "¿Cómo se llama el himno oficial del club?",
+          "opciones": ["Els Segadors", "El Cant de la Senyera", "Himne del Centenari", "Cant del Barça"],
+          "correcta": 3,
+          "dato": "El Cant del Barça se estrenó en 1974, en el 75.º aniversario del club."
+        },
+        {
+          "pregunta": "¿Qué presidente del Barça fue fusilado en 1936, al comienzo de la Guerra Civil?",
+          "opciones": ["Joan Gamper", "Josep Lluís Núñez", "Josep Sunyol", "Agustí Montal"],
+          "correcta": 2,
+          "dato": "Josep Sunyol fue detenido y fusilado por tropas franquistas en la sierra de Guadarrama, en agosto de 1936."
+        },
+        {
+          "pregunta": "En el Balón de Oro 2010, el podio fue de La Masia: Messi, Iniesta y…",
+          "opciones": ["Carles Puyol", "Xavi Hernández", "Sergio Busquets", "Gerard Piqué"],
+          "correcta": 1,
+          "dato": "Messi ganó por delante de Iniesta y Xavi: tres canteranos del Barça en el podio."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-29",
+      "numero": 16,
+      "preguntas": [
+        {
+          "pregunta": "¿Cómo se llama el estadio donde juegan el Barça Atlètic y el femenino?",
+          "opciones": ["Mini Estadi", "Estadi Johan Cruyff", "Les Corts", "Palau Blaugrana"],
+          "correcta": 1,
+          "dato": "Se inauguró en 2019 en la Ciutat Esportiva Joan Gamper, en Sant Joan Despí."
+        },
+        {
+          "pregunta": "¿Qué jugadora del Barça ganó el Balón de Oro en 2021 y 2022?",
+          "opciones": ["Alexia Putellas", "Aitana Bonmatí", "Mapi León", "Patri Guijarro"],
+          "correcta": 0,
+          "dato": "Alexia Putellas ganó los dos; después Aitana Bonmatí tomó el relevo."
+        },
+        {
+          "pregunta": "¿Quién marcó en Stamford Bridge en el minuto 93 de la semifinal de 2009?",
+          "opciones": ["Xavi Hernández", "Samuel Eto'o", "Andrés Iniesta", "Lionel Messi"],
+          "correcta": 2,
+          "dato": "El «Iniestazo» llevó al Barça a la final de Roma, que ganó al Manchester United."
+        },
+        {
+          "pregunta": "¿Qué jugador del Barça fue aplaudido en pie por el Bernabéu en 2005?",
+          "opciones": ["Rivaldo", "Samuel Eto'o", "Deco", "Ronaldinho"],
+          "correcta": 3,
+          "dato": "Fue el 19 de noviembre de 2005: 0-3 con dos goles de Ronaldinho."
+        },
+        {
+          "pregunta": "¿Cuántas Ligas seguidas ganó el Dream Team de Cruyff?",
+          "opciones": ["Dos", "Tres", "Cuatro", "Cinco"],
+          "correcta": 2,
+          "dato": "Cuatro, de 1990-91 a 1993-94. Tres de ellas se decidieron en la última jornada."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-30",
+      "numero": 17,
+      "preguntas": [
+        {
+          "pregunta": "¿En qué año se inauguró el Camp Nou?",
+          "opciones": ["1950", "1957", "1962", "1972"],
+          "correcta": 1,
+          "dato": "El 24 de septiembre de 1957, con un partido ante una selección de Varsovia."
+        },
+        {
+          "pregunta": "¿Qué entrenador ganó el segundo triplete del Barça, en 2015?",
+          "opciones": ["Luis Enrique", "Pep Guardiola", "Gerardo Martino", "Ernesto Valverde"],
+          "correcta": 0,
+          "dato": "Luis Enrique ganó Liga, Copa y Champions en su primera temporada en el banquillo."
+        },
+        {
+          "pregunta": "¿A qué equipo le remontó el Barça un 4-0 con un 6-1 en 2017?",
+          "opciones": ["Chelsea", "Juventus", "Paris Saint-Germain", "Arsenal"],
+          "correcta": 2,
+          "dato": "Sergi Roberto marcó el sexto en el minuto 95, el 8 de marzo de 2017."
+        },
+        {
+          "pregunta": "¿Cuántos goles marcó Messi en el año natural 2012?",
+          "opciones": ["73", "82", "86", "91"],
+          "correcta": 3,
+          "dato": "91 entre Barça y Argentina: récord de goles en un año natural."
+        },
+        {
+          "pregunta": "¿Quién ha jugado más partidos oficiales con el Barça?",
+          "opciones": ["Xavi Hernández", "Lionel Messi", "Andrés Iniesta", "Sergio Busquets"],
+          "correcta": 1,
+          "dato": "Messi jugó 778; Xavi, 767."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-01",
+      "numero": 18,
+      "preguntas": [
+        {
+          "pregunta": "¿Quién levantó la Champions de 2011 en Wembley, por cesión de Puyol?",
+          "opciones": ["Éric Abidal", "Xavi Hernández", "Víctor Valdés", "Gerard Piqué"],
+          "correcta": 0,
+          "dato": "Puyol le cedió el brazalete a Abidal, que había vuelto a jugar semanas antes tras una operación."
+        },
+        {
+          "pregunta": "¿Qué edad tenía Lamine Yamal cuando debutó con el primer equipo, en 2023?",
+          "opciones": ["16 años", "15 años", "17 años", "18 años"],
+          "correcta": 1,
+          "dato": "Debutó el 29 de abril de 2023 ante el Betis, con 15 años y 290 días."
+        },
+        {
+          "pregunta": "¿Qué entrenador ganó la Liga 2022-23?",
+          "opciones": ["Ronald Koeman", "Ernesto Valverde", "Xavi Hernández", "Hansi Flick"],
+          "correcta": 2,
+          "dato": "Fue la primera Liga de Xavi como entrenador, cuatro años después de la anterior del club."
+        },
+        {
+          "pregunta": "¿Qué entrenador alemán llegó al banquillo del Barça en 2024?",
+          "opciones": ["Jürgen Klopp", "Thomas Tuchel", "Julian Nagelsmann", "Hansi Flick"],
+          "correcta": 3,
+          "dato": "Hansi Flick llegó en el verano de 2024 tras haber ganado el sextete con el Bayern."
+        },
+        {
+          "pregunta": "¿Cómo se llama a los aficionados del Barça?",
+          "opciones": ["Pericos", "Colchoneros", "Culés", "Merengues"],
+          "correcta": 2,
+          "dato": "Viene de «cul»: desde la calle se veían los traseros de los aficionados sentados en el muro del campo de la calle Indústria."
+        }
+      ]
+    }
+  ]
+}
