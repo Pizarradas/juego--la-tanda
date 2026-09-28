@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "efectos": {
+    "golpeo": {
+      "inicio": 0.0,
+      "duracion": 0.45
+    },
+    "silbato": {
+      "inicio": 0.7,
+      "duracion": 1.0
+    },
+    "parada": {
+      "inicio": 1.95,
+      "duracion": 0.55
+    },
+    "grito_gol": {
+      "inicio": 2.75,
+      "duracion": 3.65
+    },
+    "grito_parada": {
+      "inicio": 6.65,
+      "duracion": 2.75
+    },
+    "aplauso": {
+      "inicio": 9.65,
+      "duracion": 4.55
+    }
+  },
+  "grada": {
+    "bucle": [
+      0.2,
+      10.2
+    ]
+  }
+}

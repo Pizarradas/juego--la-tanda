@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "kbps": 48,
+  "efectos": [
+    {
+      "nombre": "golpeo",
+      "archivo": "_fuentes/1044.wav",
+      "inicio": "arranque:2",
+      "duracion": 0.4,
+      "pico_db": -1.5,
+      "fundido_salida": 0.12
+    },
+    {
+      "nombre": "silbato",
+      "archivo": "_fuentes/1017.wav",
+      "inicio": "arranque:1",
+      "duracion": 0.95,
+      "pico_db": -6,
+      "fundido_salida": 0.06
+    },
+    {
+      "nombre": "parada",
+      "archivo": "_fuentes/kenney/Audio/impactPunch_heavy_000.ogg",
+      "inicio": 0,
+      "duracion": 0.5,
+      "pico_db": -3
+    },
+    {
+      "nombre": "grito_gol",
+      "archivo": "_fuentes/quistard-237678.mp3",
+      "inicio": 3.8,
+      "duracion": 3.6,
+      "pico_db": -2,
+      "fundido_entrada": 0.05,
+      "fundido_salida": 1.2
+    },
+    {
+      "nombre": "grito_parada",
+      "archivo": "_fuentes/quistard-237678.mp3",
+      "inicio": 37.3,
+      "duracion": 2.7,
+      "pico_db": -4,
+      "fundido_entrada": 0.1,
+      "fundido_salida": 0.9
+    },
+    {
+      "nombre": "aplauso",
+      "archivo": "_fuentes/0021.wav",
+      "inicio": 0.6,
+      "duracion": 4.5,
+      "pico_db": -4,
+      "fundido_entrada": 0.2,
+      "fundido_salida": 1.5
+    }
+  ],
+  "grada": {
+    "archivo": "_fuentes/quistard-237678.mp3",
+    "inicio": 20.5,
+    "duracion": 10,
+    "cruce": 1.5,
+    "rms_db": -24
+  }
+}
