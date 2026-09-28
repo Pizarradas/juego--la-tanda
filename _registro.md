@@ -336,7 +336,7 @@ Feedback de usuarios: en algunos móviles había que desplazarse para llegar a l
 - **Apagado por defecto.** El botón de altavoz ya no depende del 3D: está visible siempre que el navegador tenga Web Audio. La preferencia se guarda en `penaltis:v4:sonido` y se aplica al tocar «Empezar», porque el navegador exige un gesto.
 - **Aviso para descubrirlo:** en el primer gol con el sonido apagado aparece «Actívalo para oír el estadio» junto al altavoz, con un aro amarillo. Dura 5 s y sale una sola vez (`penaltis:v4:aviso-sonido`).
 - **Batería:** el audio se suspende con la pestaña oculta, al salir de la página y a los 6 s de acabar la tanda (tras la sintonía). Se reanuda al volver al juego.
-- **iPhone:** sesión de audio `ambient`. Respeta el interruptor de silencio y no corta la música o el pódcast que suene de fondo.
+- **iPhone:** sesión de audio `ambient`. Respeta el interruptor de silencio y no corta la música o el pódcast que suene de fondo. *Sustituido en V4.18 por `playback`.*
 - **Muestras grabadas (hueco preparado):** `MUESTRAS` en `penaltis-V4.sonido.js` admite URL para `golpeo`, `red`, `parada`, `grito_gol`, `grito_parada`, `ambiente`, `final_bien`, `final_mal` y `perfecto`. Se descargan solo al activar el sonido y sustituyen al sintetizado. Si fallan o no han llegado, suena el sintetizado. Formato recomendado: .m4a o .mp3 mono de 32–64 kbps, menos de 60 KB por clip.
 - **Rendimiento medido (Chromium headless, sin GPU):**
   - Cada sonido cuesta entre 0,04 y 0,15 ms en el hilo principal; la sintonía final, unos 1 ms. El audio se procesa en el hilo de audio del navegador.
@@ -344,3 +344,71 @@ Feedback de usuarios: en algunos móviles había que desplazarse para llegar a l
   - Coste único: 45–70 ms al activar el sonido la primera vez, casi todo del propio `AudioContext` del navegador. Ocurre en el toque del altavoz o de «Empezar», no durante la jugada.
   - Los 2 s de ruido de la grada se generan en 8 trozos en tiempo libre, así que no bloquean ese toque.
 - **Pendiente:** escucharlo en un iPhone y un Android reales (volúmenes y mezcla con el interruptor de silencio). Headless no reproduce audio, solo lo programa.
+
+## V4.18 · Sonido: «no se oye nada» (2026-09-28)
+
+Informe: al probar la V4.17 no se oía nada. En Chromium el motor sí genera señal: medido con un analizador en la salida, pico de 0,9 en el gol. Se corrigen las causas probables en el dispositivo:
+
+- **iPhone con el interruptor de silencio puesto:** con la sesión `ambient` de V4.17, Web Audio queda mudo. Pasa a `playback`, porque el sonido solo se enciende si el jugador lo pide. Contrapartida: pausa la música o el pódcast de fondo, como un vídeo.
+- **Silencio tras activar:** hasta el primer tiro no sonaba nada, y la grada (ruido con paso bajo a 700 Hz) casi no la reproducen los altavoces del móvil. Ahora hay un «ding-dong» de confirmación al activar, y la grada suma una banda media a 1,1 kHz. Pico de la grada sola: de ~0 a 0,15–0,38.
+- **La grada tardaba en arrancar con el 3D:** el ruido se generaba con `requestIdleCallback` y, con el 3D animando, apenas había tiempo libre. Ahora se genera en trozos con `setTimeout` (1–3 ms cada uno) y la grada suena al momento.
+- **Desbloqueo en Safari:** en el mismo toque se reproduce un búfer vacío. Además, se reanuda también el estado `interrupted` de iOS (llamada, otra app, pantalla bloqueada), no solo `suspended`.
+- **Saturación:** se añade un limitador (`DynamicsCompressor`) a la salida, porque grito, red y grada juntos llegaban a 0,98.
+- **Pendiente:** confirmarlo en un iPhone y un Android reales.
+
+## V4.19 · Sonido activado y a la vista (2026-09-28)
+
+Informe: en el portátil no se oía nada. El motor sí suena (medido en escritorio y en móvil); el problema era que el sonido no se encontraba.
+
+- **Activado por defecto.** Solo lo apaga un «0» guardado en `penaltis:v4:sonido`. Suena desde el toque en «Empezar la tanda», que es el gesto que exige el navegador.
+- **Interruptor en la entrada**, bajo «Empezar la tanda»: «Sonido activado / desactivado», sincronizado con el altavoz de la escena. En móvil va dentro del bloque pegado abajo.
+- **Altavoz visible:** en escritorio era un círculo oscuro sobre la grada oscura. Ahora lleva borde claro y se pone amarillo cuando está activo.
+- **Caché:** los `<script>` y el `import()` de la escena llevan `?v=4.19` (constante `VERSION` en `penaltis-V4.juego.js`), para que el navegador no mezcle archivos nuevos con viejos. Hay que subir la versión en cada entrega.
+- **Guía de la primera vez:** en escritorio dice «Elige una respuesta (o pulsa A, B, C o D)». En táctil sigue diciendo «Toca una respuesta».
+- **Verificación:** escritorio 1440×800 con sonido (pico 0,88), escritorio con el sonido quitado en la entrada (no se crea contexto de audio) y móvil 390×664 (pico 0,87). Sin errores.
+- **Nota de entrega:** la V4.18 (`penaltis-V4.sonido.js`) no llegó a escribirse en la carpeta del equipo en la primera entrega. Se entrega ahora junto con la V4.19.
+
+## V4.20 · Sonido híbrido: grabaciones con licencia abierta + síntesis (2026-09-28)
+
+- **Qué es grabado y qué sintetizado:**
+  - Grabados: golpeo, silbato (también el pitido final, recortado en 2 cortos y 1 largo), parada, grito de gol, «uyyy» de la parada, aplauso del final y grada en bucle.
+  - Sintetizados: red, toque, tic, confirmación y sintonía, que suenan bien así y pesan 0 KB.
+  - Si falta una grabación, no carga o aún no ha llegado, suena la versión sintetizada. El juego nunca se queda mudo; se ha probado quitando `efectos.json`.
+- **Dos archivos en `assets/audio/`**, que se descargan solo cuando el sonido está activado:
+  - `efectos.mp3`, un sprite de efectos cortos con su mapa en `efectos.json`.
+  - `grada.mp3`, un bucle sin salto: final fundido con el principio y reproducido con `loopStart`/`loopEnd`.
+  - Formato: mono, 44,1 kHz, MP3 a 48 kbps. Peso estimado en el peor caso: unos 80 KB de efectos y 85 KB de grada.
+- **`tools/audio.py`** (python3 + numpy + ffmpeg):
+  - `analizar` muestra los arranques y el perfil de volumen de una grabación, para elegir el corte.
+  - `construir` genera los archivos a partir de `assets/audio/fuentes.json`: recorte, fundidos, normalización y sprite.
+  - `tools/audio-previa.html` sirve para escuchar cada efecto y el empalme de la grada.
+- **Grabaciones originales** en `assets/audio/_fuentes/`. No se publican (`.gitignore` de la carpeta).
+- **Procedencia y licencias:** en `assets/PROCEDENCIA.md`. Quistard (Freesound) es CC BY 3.0: exige crédito visible, que se añadirá en el juego cuando se incorpore.
+- **Estado:** motor, herramientas y manifiesto listos. Faltan las grabaciones: la red del entorno de trabajo no llega a BigSoundBank, Freesound ni Kenney, así que hay que descargarlas a mano. Mientras tanto suena todo sintetizado, igual que en V4.19.
+- **Caché:** `?v=4.20` en los scripts. Las grabaciones llevan su propia versión (`VERSION_AUDIO` en `penaltis-V4.sonido.js`), que hay que subir al regenerar.
+
+## V4.21 · Grabaciones incorporadas y enlace verificado (2026-09-28)
+
+- **Descargadas con el navegador de la app** (con permiso) y copiadas a `assets/audio/_fuentes/`:
+  - `1044.wav`, `1017.wav` y `0021.wav` de BigSoundBank.
+  - El pack de Kenney.
+  - `quistard-237678.mp3`: la vista previa HQ de Freesound, a 128 kbps, que no pide sesión y tiene la misma licencia. Es de sobra para la salida a 48 kbps.
+- **Cortes elegidos** con `tools/audio.py analizar`:
+  - Golpeo: 2.º golpe.
+  - Silbato: 1.er pitido.
+  - Parada: `impactPunch_heavy_000` de Kenney.
+  - Grito de gol: la explosión a los 3,8 s de la grabación de Quistard.
+  - «Uyyy»: la subida y caída de los 37,3 s.
+  - Grada: el tramo estable de 20,5 s a 30,5 s, en bucle de 10 s.
+  - Aplauso: 4,5 s desde el arranque.
+- **Salida:** `efectos.mp3` (85 KB) + `efectos.json`, y `grada.mp3` (61 KB).
+- **Volumen de la grada grabada:** 0,5, frente a 0,3 de la sintetizada. Con gol sube ×1,6 y con parada ×1,15, relativo al nivel de cada una.
+- **Créditos visibles** bajo el juego: «Sonido de estadio: Quistard (Freesound), CC BY 3.0. Efectos: BigSoundBank y Kenney (CC0)». Obligatorio por la licencia CC BY.
+- **Auditoría del enlace:** se interceptan todas las reproducciones durante una tanda completa (gol, parada, gol, gol, tiempo agotado; 3 de 5), en 2D y en 3D.
+  - Se cargan los 6 efectos y la grada.
+  - Gol: silbato, golpeo, red (sintetizada) y grito de gol.
+  - Parada y tiempo agotado: silbato, golpeo, parada y «uyyy».
+  - Final: tres pitidos grabados y aplauso.
+  - Grada: arranca la sintetizada y se sustituye por la grabada en bucle (0,2–10,2 s) en cuanto llega.
+  - No hay errores de audio; los únicos 404 son del DS, que no está en la copia de pruebas.
+- **Caché:** `?v=4.21`.

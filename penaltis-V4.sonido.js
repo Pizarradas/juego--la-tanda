@@ -1,5 +1,5 @@
 /* ==========================================================
-   La tanda · V4.17 · SONIDO
+   La tanda · V4.17–V4.20 · SONIDO
    Motor de audio común a la escena 3D y a la ilustración 2D.
 
    - Web Audio: suena en el hilo de audio del navegador y no compite con
@@ -10,12 +10,18 @@
    - Silenciado por defecto. La preferencia la guarda penaltis-V4.juego.js.
    - Batería: con la pestaña oculta o fuera de la tanda, el contexto de
      audio se suspende; el ambiente de grada solo suena durante el juego.
-   - iPhone: sesión de audio «ambient»: respeta el interruptor de silencio
-     y no corta la música o el pódcast que el lector ya esté escuchando.
-   - Muestras grabadas (opcional): si MUESTRAS trae la URL de un sonido, se
-     descarga al activar el sonido y sustituye al sintetizado. Si falla o no
-     ha llegado todavía, suena el sintetizado. Formato recomendado: .m4a
-     (AAC) o .mp3 mono, 32–64 kbps, menos de 60 KB por clip.
+   - iPhone: sesión de audio «playback» (V4.18). Como el sonido solo se
+     enciende a petición del jugador, suena aunque el interruptor de
+     silencio esté puesto. Contrapartida: pausa la música o el pódcast que
+     sonara de fondo, como cualquier vídeo.
+   - V4.20 · HÍBRIDO: los sonidos donde la síntesis se nota (golpeo,
+     silbato, parada, gritos, aplauso y grada) son grabaciones con licencia
+     abierta, en dos archivos: assets/audio/efectos.mp3 (sprite de efectos
+     cortos, mapa en efectos.json) y assets/audio/grada.mp3 (bucle). Los
+     genera tools/audio.py y su procedencia está en assets/PROCEDENCIA.md.
+     Se descargan solo al activar el sonido. Los de interfaz (toque, tic,
+     confirmación, sintonía) y la red siguen sintetizados. Si un archivo
+     falta, falla o aún no ha llegado, suena el sintetizado: nunca mudo.
 
    API (window.pocSonido):
      activar(bool) · activo()
@@ -29,9 +35,10 @@
 (function (global) {
   'use strict';
 
-  /* Hueco para muestras grabadas. Vacío = todo sintetizado.
-     Ej.: { grito_gol: 'assets/audio/gol.m4a', ambiente: 'assets/audio/grada.m4a' } */
-  var MUESTRAS = {};
+  /* V4.20: grabaciones. La versión evita que la caché sirva un sprite
+     viejo con un mapa nuevo (subirla al regenerar con tools/audio.py). */
+  var VERSION_AUDIO = '1';
+  var RUTA = 'assets/audio/';
 
   var AC = global.AudioContext || global.webkitAudioContext;
   var ctx = null;
@@ -40,27 +47,39 @@
   var amb = null;          /* { src, gain } */
   var encendido = false;
   var enJuego = false;
-  var buffers = {};        /* muestras decodificadas */
+  var sprite = null;       /* { buf, mapa } cuando efectos.mp3 está listo */
+  var gradaGrabada = null; /* { buf, bucle: [ini, fin] } */
+  var cargando = false;
   var apagarTimer = 0;
 
   function ahora() { return ctx.currentTime; }
 
   function preparar() {
     if (ctx || !AC) { return !!ctx; }
+    /* V4.18: sesión «playback». El jugador ha pedido el sonido tocando el
+       altavoz: en iPhone debe oírse aunque el interruptor de silencio esté
+       puesto (con «ambient» quedaba mudo y parecía roto). */
     try {
-      if (global.navigator && navigator.audioSession) { navigator.audioSession.type = 'ambient'; }
+      if (global.navigator && navigator.audioSession) { navigator.audioSession.type = 'playback'; }
     } catch (e) { /* no disponible */ }
     try { ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { ctx = new AC(); }
     maestro = ctx.createGain();
     maestro.gain.value = 0;
-    maestro.connect(ctx.destination);
+    /* V4.18: limitador para que grito + red + grada no saturen */
+    var limitador = ctx.createDynamicsCompressor();
+    limitador.threshold.value = -8;
+    limitador.knee.value = 6;
+    limitador.ratio.value = 12;
+    limitador.attack.value = 0.003;
+    limitador.release.value = 0.2;
+    maestro.connect(limitador).connect(ctx.destination);
     generarRuido();
     cargarMuestras();
     return true;
   }
 
   /* 2 s de ruido marrón compartido por grada, red y paradas. Se genera
-     por trozos de 0,25 s en tiempo libre para no bloquear el toque que
+     por trozos de 0,25 s para no bloquear el toque que
      activa el sonido; hasta que está listo, los sonidos de ruido se
      omiten (los tonos suenan ya). */
   function generarRuido() {
@@ -69,41 +88,94 @@
     var d = buf.getChannelData(0);
     var paso = Math.floor(ctx.sampleRate / 4);
     var i = 0, ultimo = 0;
-    var libre = global.requestIdleCallback || function (fn) { return setTimeout(fn, 0); };
+    /* V4.18: setTimeout y no requestIdleCallback: con el 3D animando casi
+       no hay tiempo libre y la grada tardaba segundos en arrancar. Cada
+       trozo cuesta 1–3 ms. */
+    var libre = function (fn) { return setTimeout(fn, 0); };
     (function trozo() {
       var fin = Math.min(len, i + paso);
       for (; i < fin; i++) {
         ultimo = (ultimo + 0.02 * (Math.random() * 2 - 1)) / 1.02;
         d[i] = ultimo * 3.2;
       }
-      if (i < len) { libre(trozo, { timeout: 200 }); return; }
+      if (i < len) { libre(trozo); return; }
       ruidoBuf = buf;
       if (enJuego && encendido) { ambienteOn(); }
     })();
   }
 
-  function cargarMuestras() {
-    Object.keys(MUESTRAS).forEach(function (k) {
-      if (!MUESTRAS[k] || buffers[k]) { return; }
-      buffers[k] = 'cargando';
-      fetch(MUESTRAS[k]).then(function (r) {
-        if (!r.ok) { throw new Error(r.status); }
-        return r.arrayBuffer();
-      }).then(function (ab) {
-        return new Promise(function (ok, ko) { ctx.decodeAudioData(ab, ok, ko); });
-      }).then(function (buf) { buffers[k] = buf; })
-        .catch(function () { delete buffers[k]; });
+  function descargar(nombre) {
+    return fetch(RUTA + nombre + '?v=' + VERSION_AUDIO).then(function (r) {
+      if (!r.ok) { throw new Error(nombre + ' ' + r.status); }
+      return r;
     });
   }
 
-  /* Reproduce una muestra si está lista; si no, devuelve false */
-  function muestra(k, vol) {
-    var b = buffers[k];
-    if (!b || b === 'cargando') { return false; }
-    var s = ctx.createBufferSource(); s.buffer = b;
-    var g = ctx.createGain(); g.gain.value = vol == null ? 1 : vol;
-    s.connect(g).connect(maestro); s.start();
+  function decodificar(ab) {
+    /* forma con callbacks: Safari antiguo no devuelve promesa */
+    return new Promise(function (ok, ko) { ctx.decodeAudioData(ab, ok, ko); });
+  }
+
+  /* V4.20: una vez, al activar el sonido. Primero el mapa, luego los dos
+     MP3 en paralelo. El decodificado ocurre fuera del hilo principal. */
+  function cargarMuestras() {
+    if (cargando) { return; }
+    cargando = true;
+    descargar('efectos.json').then(function (r) { return r.json(); }).then(function (mapa) {
+      var efectos = mapa.efectos && Object.keys(mapa.efectos).length
+        ? descargar('efectos.mp3').then(function (r) { return r.arrayBuffer(); }).then(decodificar)
+          .then(function (buf) { sprite = { buf: buf, mapa: mapa.efectos }; })
+        : null;
+      var grada = mapa.grada
+        ? descargar('grada.mp3').then(function (r) { return r.arrayBuffer(); }).then(decodificar)
+          .then(function (buf) {
+            gradaGrabada = { buf: buf, bucle: mapa.grada.bucle };
+            /* si ya sonaba la sintetizada, se cambia por la grabada */
+            if (amb && amb.sintetica) { ambienteOff(false); ambienteOn(); }
+          })
+        : null;
+      return Promise.all([efectos, grada].map(function (p) {
+        return p && p.catch(function (e) { if (global.console) { console.warn('[sonido]', e); } });
+      }));
+    }).catch(function (e) {
+      /* sin grabaciones: todo sintetizado */
+      if (global.console) { console.warn('[sonido] sin grabaciones:', e); }
+    });
+  }
+
+  function tiene(k) { return !!(sprite && sprite.mapa[k]); }
+
+  /* Reproduce un efecto del sprite. Devuelve false si no está (y entonces
+     el llamante sintetiza). corte: segundos máximos (para el pitido final). */
+  function muestra(k, vol, retraso, corte) {
+    if (!tiene(k)) { return false; }
+    var m = sprite.mapa[k];
+    var t0 = ahora() + (retraso || 0);
+    var dur = corte ? Math.min(corte, m.duracion) : m.duracion;
+    var s = ctx.createBufferSource(); s.buffer = sprite.buf;
+    var g = ctx.createGain();
+    var v = vol == null ? 1 : vol;
+    g.gain.setValueAtTime(v, t0);
+    if (corte) {
+      /* cortar sin chasquido */
+      g.gain.setValueAtTime(v, t0 + dur - 0.04);
+      g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+    }
+    s.connect(g).connect(maestro);
+    s.start(t0, m.inicio, dur);
     return true;
+  }
+
+  /* V4.18: desbloqueo en el mismo toque (Safari antiguo solo «abre» el
+     audio si algo suena dentro del gesto) y reanudar también el estado
+     «interrupted» de iOS (llamada, otra app, bloqueo de pantalla). */
+  function despertar() {
+    if (!ctx) { return; }
+    if (ctx.state !== 'running' && ctx.state !== 'closed') { try { ctx.resume(); } catch (e) { /* nada */ } }
+    try {
+      var b = ctx.createBuffer(1, 1, ctx.sampleRate);
+      var s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0);
+    } catch (e) { /* nada */ }
   }
 
   function listo() { return ctx && encendido && ctx.state !== 'closed'; }
@@ -153,25 +225,38 @@
   }
 
   /* ---------- ambiente de grada ---------- */
+  /* V4.21: la grada grabada viene normalizada a -24 dB RMS; con 0,5 queda
+     de fondo (unos -30 dB RMS) sin tapar golpeo ni gritos */
+  var NIVEL_GRADA = 0.3;
+  var NIVEL_GRADA_GRABADA = 0.5;
+  function nivelGrada() { return amb && !amb.sintetica ? NIVEL_GRADA_GRABADA : NIVEL_GRADA; }
+
   function ambienteOn() {
     if (amb || !listo()) { return; }
-    var grabado = buffers.ambiente && buffers.ambiente !== 'cargando';
+    var grabado = !!gradaGrabada;
     if (!grabado && !ruidoBuf) { return; } /* llegará al terminar generarRuido() */
     var src = ctx.createBufferSource();
     src.loop = true;
     var g = ctx.createGain(); g.gain.value = 0.0001;
     if (grabado) {
-      src.buffer = buffers.ambiente;
+      src.buffer = gradaGrabada.buf;
+      src.loopStart = gradaGrabada.bucle[0];
+      src.loopEnd = gradaGrabada.bucle[1];
       src.connect(g);
     } else {
       src.buffer = ruidoBuf;
+      /* V4.18: rumor grave + banda media. Los altavoces del móvil apenas
+         dan graves: solo con el paso bajo, la grada no se oía. */
       var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 0.6;
+      var gm = ctx.createGain(); gm.gain.value = 2.2;
       src.connect(lp).connect(g);
+      src.connect(bp).connect(gm).connect(g);
     }
     g.connect(maestro);
-    src.start();
-    g.gain.setTargetAtTime(0.3, ahora(), 0.4);
-    amb = { src: src, gain: g };
+    if (grabado) { src.start(0, gradaGrabada.bucle[0]); } else { src.start(); }
+    amb = { src: src, gain: g, sintetica: !grabado };
+    g.gain.setTargetAtTime(nivelGrada(), ahora(), 0.4);
   }
 
   function ambienteOff(lento) {
@@ -185,7 +270,7 @@
     if (!amb) { return; }
     var t0 = ahora();
     amb.gain.gain.setTargetAtTime(nivel, t0, 0.1);
-    amb.gain.gain.setTargetAtTime(0.3, t0 + dur, 0.8);
+    amb.gain.gain.setTargetAtTime(nivelGrada(), t0 + dur, 0.8);
   }
 
   /* ---------- energía: suspender cuando no hace falta ---------- */
@@ -193,7 +278,7 @@
     if (!ctx) { return; }
     clearTimeout(apagarTimer);
     var necesita = encendido && !document.hidden;
-    if (necesita && ctx.state === 'suspended') { ctx.resume(); }
+    if (necesita && ctx.state !== 'running' && ctx.state !== 'closed') { ctx.resume(); }
     if (!necesita && ctx.state === 'running') {
       /* se deja terminar el fundido antes de suspender */
       apagarTimer = setTimeout(function () { if (ctx.state === 'running') { ctx.suspend(); } }, 400);
@@ -212,15 +297,20 @@
     activo: function () { return encendido; },
     /* solo pruebas: 'sin-crear' | 'running' | 'suspended' */
     estado: function () { return ctx ? ctx.state : 'sin-crear'; },
+    /* solo pruebas: qué grabaciones están cargadas */
+    grabaciones: function () { return { efectos: sprite ? Object.keys(sprite.mapa) : [], grada: !!gradaGrabada }; },
 
     activar: function (v) {
       encendido = !!v;
       if (encendido && !preparar()) { encendido = false; return false; }
       if (!ctx) { return false; }
       if (encendido) {
-        if (ctx.state === 'suspended') { ctx.resume(); }
+        despertar();
         maestro.gain.setTargetAtTime(0.9, ahora(), 0.08);
         if (enJuego) { ambienteOn(); }
+        /* confirmación inmediata: «ya suena» (antes no se oía nada hasta el tiro) */
+        tono(660, 0.09, 0.14, 'triangle', 0.05);
+        tono(990, 0.14, 0.14, 'triangle', 0.14);
       } else {
         maestro.gain.setTargetAtTime(0, ahora(), 0.08);
         ambienteOff(false);
@@ -233,7 +323,7 @@
       enJuego = !!v;
       if (!ctx) { return; }
       if (enJuego) {
-        if (encendido && ctx.state === 'suspended' && !document.hidden) { ctx.resume(); }
+        if (encendido && ctx.state !== 'running' && ctx.state !== 'closed' && !document.hidden) { ctx.resume(); }
         ambienteOn();
       } else {
         ambienteOff(true);
@@ -241,18 +331,21 @@
       revisar();
     },
 
-    silbato: function () { if (listo()) { pitido(0.42); } },
+    silbato: function () {
+      if (!listo()) { return; }
+      if (!muestra('silbato', 0.8, 0, 0.5)) { pitido(0.42); }
+    },
 
     golpeo: function () {
       if (!listo()) { return; }
-      if (muestra('golpeo', 0.9)) { return; }
+      if (muestra('golpeo', 1)) { return; }
       tono(140, 0.18, 0.5, 'sine', 0, 45);
       ruido(0.08, 'highpass', 1800, 0.7, 0.25, 0.003);
     },
 
     red: function () {
       if (!listo()) { return; }
-      if (muestra('red', 0.8)) { return; }
+      /* la red sigue sintetizada: no hay grabación abierta que convenza */
       ruido(0.45, 'bandpass', 2600, 0.8, 0.18, 0.01);
     },
 
@@ -269,7 +362,7 @@
         ruido(gol ? 2.6 : 1.4, 'bandpass', gol ? 1100 : 450, 0.6, gol ? 0.5 : 0.26, gol ? 0.18 : 0.3);
         ruido(gol ? 2.2 : 1.1, 'bandpass', gol ? 520 : 300, 0.9, gol ? 0.35 : 0.18, 0.12);
       }
-      subirGrada(gol ? 0.75 : 0.45, 2.2);
+      subirGrada(nivelGrada() * (gol ? 1.6 : 1.15), 2.2);
     },
 
     toque: function () {
@@ -285,19 +378,26 @@
 
     final: function (goles, total) {
       if (!listo()) { return; }
-      /* pitido final: dos cortos y uno largo */
-      pitido(0.22, 0);
-      pitido(0.22, 0.32);
-      pitido(0.7, 0.64);
-      if (muestra(goles >= Math.ceil(total / 2) ? 'final_bien' : 'final_mal', 0.9)) { return; }
+      /* pitido final: dos cortos y uno largo (grabado si está) */
+      if (tiene('silbato')) {
+        muestra('silbato', 0.8, 0, 0.2);
+        muestra('silbato', 0.8, 0.32, 0.2);
+        muestra('silbato', 0.8, 0.64, 0.8);
+      } else {
+        pitido(0.22, 0);
+        pitido(0.22, 0.32);
+        pitido(0.7, 0.64);
+      }
       var t = 1.5;
+      /* V4.20: con buen resultado, aplauso grabado bajo la sintonía */
+      var aplauso = goles >= Math.ceil(total / 2) && muestra('aplauso', goles === total ? 0.9 : 0.6, t - 0.2);
       if (goles === total) {
         /* pleno: arpegio mayor ascendente + ovación */
         [523, 659, 784, 1047].forEach(function (f, i) { tono(f, 0.35, 0.12, 'triangle', t + i * 0.11); });
-        ruido(3, 'bandpass', 1000, 0.6, 0.45, 0.2, t);
+        if (!aplauso) { ruido(3, 'bandpass', 1000, 0.6, 0.45, 0.2, t); }
       } else if (goles >= Math.ceil(total / 2)) {
         [523, 659, 784].forEach(function (f, i) { tono(f, 0.3, 0.1, 'triangle', t + i * 0.12); });
-        ruido(1.8, 'bandpass', 900, 0.6, 0.3, 0.2, t);
+        if (!aplauso) { ruido(1.8, 'bandpass', 900, 0.6, 0.3, 0.2, t); }
       } else {
         [392, 330].forEach(function (f, i) { tono(f, 0.4, 0.09, 'triangle', t + i * 0.2); });
       }
@@ -305,7 +405,6 @@
 
     perfecto: function () {
       if (!listo()) { return; }
-      if (muestra('perfecto', 0.9)) { return; }
       [784, 988, 1175, 1568].forEach(function (f, i) { tono(f, 0.5, 0.1, 'triangle', 2.3 + i * 0.09); });
     }
   };

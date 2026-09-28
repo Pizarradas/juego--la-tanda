@@ -3142,6 +3142,64 @@
     @media (prefers-reduced-motion: reduce) {
       .poc-estadio .poc-aviso-sonido { animation: none; }
     }
+    /* ==========================================================
+       V4.19 · SONIDO A LA VISTA
+       ========================================================== */
+    /* Interruptor en la entrada, bajo «Empezar» */
+    .poc-interruptor {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-basis: 100%;
+      justify-content: center;
+      margin: 0;
+      padding: 0.6rem 1.2rem;
+      border: 0;
+      background: none;
+      font: inherit;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--poc-texto, #fff);
+      cursor: pointer;
+    }
+    .poc-interruptor[hidden] { display: none; }
+    .poc-interruptor:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; border-radius: 6px; }
+    .poc-interruptor__icono,
+    .poc-sonido__icono {
+      --poc-altavoz-off: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5z' fill='black'/%3E%3Cpath d='m23 9-6 6M17 9l6 6'/%3E%3C/svg%3E");
+      --poc-altavoz-on: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4V5z' fill='black'/%3E%3Cpath d='M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14'/%3E%3C/svg%3E");
+    }
+    .poc-interruptor__icono {
+      width: 2rem;
+      height: 2rem;
+      background: currentColor;
+      -webkit-mask: var(--poc-altavoz-off) center / contain no-repeat;
+      mask: var(--poc-altavoz-off) center / contain no-repeat;
+    }
+    .poc-interruptor[aria-pressed="true"] .poc-interruptor__icono {
+      -webkit-mask-image: var(--poc-altavoz-on);
+      mask-image: var(--poc-altavoz-on);
+    }
+    .poc-interruptor[aria-pressed="false"] { opacity: 0.75; }
+
+    /* Botón de la escena: antes era un círculo oscuro sobre la grada
+       oscura y en escritorio no se veía. Borde claro y amarillo al sonar. */
+    .poc-sonido {
+      background: rgba(6, 10, 20, 0.82);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85), 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .poc-sonido[aria-pressed="true"] { color: var(--color-functional-warning, #f7c948); }
+    @media (hover: hover) {
+      .poc-sonido:hover { background: rgba(6, 10, 20, 0.95); }
+    }
+    /* V4.21 · créditos de sonido (CC BY 3.0) */
+    .poc-creditos {
+      margin-top: 1.6rem;
+      font-size: 1.2rem;
+      line-height: 1.5;
+      text-align: center;
+      opacity: 0.75;
+    }
   </style>
 </head>
 
@@ -3310,6 +3368,11 @@
 
               <div class="poc-acciones ft-helper-spacer-b-sm">
                 <button id="poc-empezar" type="button" class="ft-btn ft-btn--primary ft-btn--md">Empezar la tanda</button>
+                <!-- V4.19: interruptor de sonido a la vista antes de empezar (encendido por defecto) -->
+                <button id="poc-sonido-entrada" type="button" class="poc-interruptor" aria-pressed="true" hidden>
+                  <span class="poc-interruptor__icono" aria-hidden="true"></span>
+                  <span id="poc-sonido-entrada-texto">Sonido activado</span>
+                </button>
               </div>
               <!-- V4.4: descanso / máximo diario / sin tandas, con cuenta atrás -->
               <div id="poc-descanso-entrada" class="poc-descanso" role="status" hidden>
@@ -3434,7 +3497,7 @@
                 <p class="poc-chip poc-chip--repeticion" aria-hidden="true">Repetición</p>
                 <!-- V4.16: guía de la primera vez (visual; el grupo de respuestas ya lo dice en su aria-label) -->
                 <p id="poc-guia" class="poc-guia" aria-hidden="true" hidden>
-                  <span class="poc-guia__mano" aria-hidden="true"></span>Toca una respuesta: chutas a esa esquina
+                  <span class="poc-guia__mano" aria-hidden="true"></span><span id="poc-guia-texto">Toca una respuesta: chutas a esa esquina</span>
                 </p>
                 <div id="poc-rotulo" class="poc-rotulo" aria-hidden="true">
                   <span class="poc-rotulo__velo"></span>
@@ -3571,6 +3634,13 @@
 
           </div>
 
+          <!-- V4.21: créditos de sonido. Obligatorio por la licencia CC BY 3.0 de Quistard -->
+          <p class="poc-fila poc-bloque ft-text poc-creditos" data-poc-date="2026-09-28">
+            Sonido de estadio: <a class="ft-link" href="https://freesound.org/s/237678/" rel="noopener" target="_blank">Quistard (Freesound)</a>,
+            <a class="ft-link" href="https://creativecommons.org/licenses/by/3.0/" rel="noopener license" target="_blank">CC BY 3.0</a>.
+            Efectos: BigSoundBank y Kenney (CC0).
+          </p>
+
           <!-- PIE DEL POC: no forma parte del producto -->
           <footer class="poc-fila poc-bloque poc-pie ft-helper-spacer-t-lg" data-poc-date="2026-09-25">
             <p class="ft-text ft-helper-fontSize-body-XS">
@@ -3607,8 +3677,9 @@
   </main>
 
   <!-- V4.17: motor de sonido común a 3D y 2D (sintetizado, 0 KB de audio) -->
-  <script src="penaltis-V4.sonido.js"></script>
-  <script src="penaltis-V4.juego.js"></script>
+  <!-- V4.19: ?v= evita que la caché mezcle versiones (subirla en cada entrega) -->
+  <script src="penaltis-V4.sonido.js?v=4.21"></script>
+  <script src="penaltis-V4.juego.js?v=4.21"></script>
 </body>
 
 </html>

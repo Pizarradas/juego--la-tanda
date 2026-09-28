@@ -52,7 +52,11 @@
   var PREFIJO_CLAVE = 'penaltis:v4:';
   var PANTALLA = 'penaltis-V4.html';
   /* V4.3: escena propia de V4 (animaciones nuevas). V3 sigue con la suya. */
-  var ESCENA = 'penaltis-V4.escena.js';
+  /* V4.19: versión en la URL para que el navegador no mezcle archivos
+     viejos de la caché con los nuevos (en el HTML, los <script> llevan la
+     misma). Subirla en cada entrega. */
+  var VERSION = '4.21';
+  var ESCENA = 'penaltis-V4.escena.js?v=' + VERSION;
   /* V4.1: preguntas, tiempos y puntos en un JSON editable por la redacción. */
   var DATOS = 'penaltis-barca.json';
   /* Valores por defecto si el JSON no trae «config» (o la trae incompleta). */
@@ -846,13 +850,24 @@
     if (estado.tanda) { vista.preparar(); }
   }
 
+  /* V4.19: el sonido viene ENCENDIDO por defecto (el jugador lo ve y lo
+     puede quitar en la entrada antes de empezar). Solo un «0» guardado lo
+     apaga. */
   function preferenciaSonido() {
-    try { return global.localStorage.getItem(PREFIJO_CLAVE + 'sonido') === '1'; } catch (e) { return false; }
+    try { return global.localStorage.getItem(PREFIJO_CLAVE + 'sonido') !== '0'; } catch (e) { return true; }
+  }
+
+  function pintarSonido(activo) {
+    dom.sonidoBoton.setAttribute('aria-pressed', String(activo));
+    if (dom.sonidoEntrada) {
+      dom.sonidoEntrada.setAttribute('aria-pressed', String(activo));
+      dom.sonidoEntradaTexto.textContent = activo ? 'Sonido activado' : 'Sonido desactivado';
+    }
   }
 
   function alternarSonido() {
     var activo = dom.sonidoBoton.getAttribute('aria-pressed') !== 'true';
-    dom.sonidoBoton.setAttribute('aria-pressed', String(activo));
+    pintarSonido(activo);
     try { global.localStorage.setItem(PREFIJO_CLAVE + 'sonido', activo ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
     if (global.pocSonido) { global.pocSonido.activar(activo); }
     quitarAvisoSonido(true);
@@ -1188,6 +1203,9 @@
      chutado nunca: «Toca una respuesta: chutas a esa esquina». */
   function pintarGuia() {
     var ver = estado.indice === 0 && !leer('guia-vista');
+    dom.guiaTexto.textContent = tactil
+      ? 'Toca una respuesta: chutas a esa esquina'
+      : 'Elige una respuesta (o pulsa A, B, C o D): chutas a esa esquina';
     dom.guia.hidden = !ver;
     dom.escena.classList.toggle('is-guia', ver);
   }
@@ -1967,6 +1985,7 @@
     dom.escena = $('poc-escena');
     dom.escena3d = $('poc-escena3d');
     dom.guia = $('poc-guia');
+    dom.guiaTexto = $('poc-guia-texto');
     /* V4.16: la barra del navegador aparece y desaparece al desplazar;
        el giro cambia el ancho. En ambos casos la escena se reajusta. */
     if (global.visualViewport) { global.visualViewport.addEventListener('resize', reencajar); }
@@ -1976,11 +1995,15 @@
       if (mqEncaje.addEventListener) { mqEncaje.addEventListener('change', alCambiar); } else if (mqEncaje.addListener) { mqEncaje.addListener(alCambiar); }
     }
     dom.sonidoBoton = $('poc-sonido');
-    dom.sonidoBoton.setAttribute('aria-pressed', String(preferenciaSonido()));
+    dom.sonidoEntrada = $('poc-sonido-entrada');
+    dom.sonidoEntradaTexto = $('poc-sonido-entrada-texto');
+    pintarSonido(preferenciaSonido());
     dom.sonidoBoton.addEventListener('click', alternarSonido);
+    dom.sonidoEntrada.addEventListener('click', alternarSonido);
     dom.avisoSonido = $('poc-aviso-sonido');
     /* V4.17: el sonido ya no depende del 3D: botón visible si el navegador tiene Web Audio */
     dom.sonidoBoton.hidden = !(global.pocSonido && global.pocSonido.disponible);
+    dom.sonidoEntrada.hidden = dom.sonidoBoton.hidden;
     /* Precarga del 3D cuando el usuario se acerca a «Empezar» */
     ['pointerenter', 'focus', 'touchstart'].forEach(function (ev) {
       dom.empezar.addEventListener(ev, cargar3D, { once: true, passive: true });
