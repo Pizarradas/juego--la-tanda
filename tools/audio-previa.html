@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La tanda · previa de sonidos</title>
+  <!-- V4.20: herramienta interna para escuchar el sprite y la grada que
+       genera tools/audio.py. No forma parte del juego. -->
+  <style>
+    :root { color-scheme: dark; --fondo: #0a1020; --tarjeta: #121b30; --texto: #eef2fa; --suave: #9aa6c0; --acento: #f7c948; }
+    body { margin: 0; padding: 24px 16px; font: 16px/1.5 system-ui, sans-serif; background: var(--fondo); color: var(--texto); }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    p { color: var(--suave); margin: 0 0 16px; }
+    ul { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 8px; }
+    li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--tarjeta); }
+    li span { flex: 1; }
+    small { color: var(--suave); }
+    button { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 0; background: var(--acento); color: #0b0f19; cursor: pointer; }
+    button[aria-pressed="true"] { background: #fff; }
+    code { color: var(--acento); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Previa de sonidos</h1>
+    <p>Escucha cada efecto tal como sonará en el juego. Para cambiar un corte, edita <code>assets/audio/fuentes.json</code>, ejecuta <code>python3 tools/audio.py construir</code> y recarga esta página.</p>
+    <ul id="lista"><li><span>Cargando…</span></li></ul>
+    <p id="estado"></p>
+  </main>
+  <script>
+    (function () {
+      var R = '../assets/audio/';
+      var ctx, sprite, grada, mapa, bucle = null;
+      var lista = document.getElementById('lista');
+      var estado = document.getElementById('estado');
+      function bajar(n) { return fetch(R + n + '?t=' + Date.now()).then(function (r) { if (!r.ok) { throw new Error(n + ' ' + r.status); } return r; }); }
+      function dec(ab) { return new Promise(function (ok, ko) { ctx.decodeAudioData(ab, ok, ko); }); }
+      function preparar() {
+        if (ctx) { return Promise.resolve(); }
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        return Promise.all([
+          sprite ? null : bajar('efectos.mp3').then(function (r) { return r.arrayBuffer(); }).then(dec).then(function (b) { sprite = b; }),
+          (grada || !mapa.grada) ? null : bajar('grada.mp3').then(function (r) { return r.arrayBuffer(); }).then(dec).then(function (b) { grada = b; })
+        ]);
+      }
+      function tocar(k) {
+        preparar().then(function () {
+          var m = mapa.efectos[k];
+          var s = ctx.createBufferSource(); s.buffer = sprite; s.connect(ctx.destination);
+          s.start(0, m.inicio, m.duracion);
+        }).catch(function (e) { estado.textContent = String(e); });
+      }
+      function alternarGrada(boton) {
+        preparar().then(function () {
+          if (bucle) { bucle.stop(); bucle = null; boton.setAttribute('aria-pressed', 'false'); boton.textContent = 'Escuchar en bucle'; return; }
+          bucle = ctx.createBufferSource(); bucle.buffer = grada; bucle.loop = true;
+          bucle.loopStart = mapa.grada.bucle[0]; bucle.loopEnd = mapa.grada.bucle[1];
+          bucle.connect(ctx.destination); bucle.start(0, mapa.grada.bucle[0]);
+          boton.setAttribute('aria-pressed', 'true'); boton.textContent = 'Parar';
+        }).catch(function (e) { estado.textContent = String(e); });
+      }
+      bajar('efectos.json').then(function (r) { return r.json(); }).then(function (m) {
+        mapa = m; lista.innerHTML = '';
+        Object.keys(m.efectos).forEach(function (k) {
+          var li = document.createElement('li');
+          li.innerHTML = '<span><strong>' + k + '</strong><br><small>' + m.efectos[k].duracion.toFixed(2) + ' s</small></span>';
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Escuchar';
+          b.addEventListener('click', function () { tocar(k); });
+          li.appendChild(b); lista.appendChild(li);
+        });
+        if (m.grada) {
+          var li = document.createElement('li');
+          li.innerHTML = '<span><strong>grada</strong><br><small>bucle de ' + (m.grada.bucle[1] - m.grada.bucle[0]).toFixed(1) + ' s: escucha el empalme</small></span>';
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Escuchar en bucle'; b.setAttribute('aria-pressed', 'false');
+          b.addEventListener('click', function () { alternarGrada(b); });
+          li.appendChild(b); lista.appendChild(li);
+        }
+      }).catch(function () {
+        lista.innerHTML = '<li><span>No hay <code>efectos.json</code>: ejecuta <code>python3 tools/audio.py construir</code>.</span></li>';
+      });
+    })();
+  </script>
+</body>
+</html>
