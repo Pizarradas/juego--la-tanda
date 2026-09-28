@@ -324,3 +324,23 @@ Feedback de usuarios: en algunos móviles había que desplazarse para llegar a l
 
   Se jugó una tanda completa en 375×553 con los cinco penaltis bien encajados. También se comprobó al cambiar el alto a mitad de penalti (la escena crece de 174 a 248 px), con movimiento reducido y con los estados `gol`, `parada` y `tiempo`. No hay scroll horizontal ni errores de consola.
 - **Pendiente:** probar en un iPhone y un Android reales. Safari cambia el alto visible al desplazar, y la emulación no lo reproduce del todo.
+
+## V4.17 · Sonido en 3D y 2D, sin coste en la jugada (2026-09-28)
+
+- **Motor común (`penaltis-V4.sonido.js`, nuevo):** el sonido deja de vivir dentro de la escena 3D. La escena y la ilustración 2D disparan los mismos sonidos, así que sin WebGL, con `?escena=2d` o mientras carga el estadio también suena. `crearSonido()` sigue en `penaltis-V4.escena.js` como reserva por si la escena se usa sin el archivo nuevo.
+- **Sonidos, todos sintetizados (0 KB de audio):**
+  - Jugada: silbato, golpeo, red o parada, y grito de la grada en dos capas.
+  - Interfaz: toque al elegir respuesta y tic en 3, 2 y 1 del reloj.
+  - Cierre: pitido final (dos cortos y uno largo) y una sintonía según el marcador (pleno, a favor o en contra), más un acorde si hay bonus de bloque perfecto.
+  - Ambiente de grada en bucle, solo durante el juego.
+- **Apagado por defecto.** El botón de altavoz ya no depende del 3D: está visible siempre que el navegador tenga Web Audio. La preferencia se guarda en `penaltis:v4:sonido` y se aplica al tocar «Empezar», porque el navegador exige un gesto.
+- **Aviso para descubrirlo:** en el primer gol con el sonido apagado aparece «Actívalo para oír el estadio» junto al altavoz, con un aro amarillo. Dura 5 s y sale una sola vez (`penaltis:v4:aviso-sonido`).
+- **Batería:** el audio se suspende con la pestaña oculta, al salir de la página y a los 6 s de acabar la tanda (tras la sintonía). Se reanuda al volver al juego.
+- **iPhone:** sesión de audio `ambient`. Respeta el interruptor de silencio y no corta la música o el pódcast que suene de fondo.
+- **Muestras grabadas (hueco preparado):** `MUESTRAS` en `penaltis-V4.sonido.js` admite URL para `golpeo`, `red`, `parada`, `grito_gol`, `grito_parada`, `ambiente`, `final_bien`, `final_mal` y `perfecto`. Se descargan solo al activar el sonido y sustituyen al sintetizado. Si fallan o no han llegado, suena el sintetizado. Formato recomendado: .m4a o .mp3 mono de 32–64 kbps, menos de 60 KB por clip.
+- **Rendimiento medido (Chromium headless, sin GPU):**
+  - Cada sonido cuesta entre 0,04 y 0,15 ms en el hilo principal; la sintonía final, unos 1 ms. El audio se procesa en el hilo de audio del navegador.
+  - En una tanda completa no hay ninguna tarea larga atribuible al sonido: 3D con y sin sonido dan la misma distribución, y en 2D sin sonido no hay ninguna.
+  - Coste único: 45–70 ms al activar el sonido la primera vez, casi todo del propio `AudioContext` del navegador. Ocurre en el toque del altavoz o de «Empezar», no durante la jugada.
+  - Los 2 s de ruido de la grada se generan en 8 trozos en tiempo libre, así que no bloquean ese toque.
+- **Pendiente:** escucharlo en un iPhone y un Android reales (volúmenes y mezcla con el interruptor de silencio). Headless no reproduce audio, solo lo programa.

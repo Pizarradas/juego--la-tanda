@@ -512,6 +512,7 @@
   function mostrar(vista, foco) {
     VISTAS.forEach(function (v) { $('poc-vista-' + v).hidden = v !== vista; });
     document.body.setAttribute('data-poc-vista', vista);
+    if (global.pocSonido) { global.pocSonido.ambiente(vista === 'juego'); }
     if (vista !== 'juego') { dom.accionesJuego.hidden = true; pararReloj(); if (dom.escena) { soltarEncaje(); } }
     if (vista === 'juego' && estado.cuenta) { clearInterval(estado.cuenta); estado.cuenta = null; }
     if (foco) {
@@ -655,6 +656,9 @@
   /* Devuelve una promesa que se resuelve al terminar el tiro. */
   function chutar(esquina, gol, estirada) {
     var destino = DESTINO_BALON[esquina];
+    /* V4.17: sonidos de la jugada en la ilustración (la 3D lleva los suyos) */
+    var conSonido = estado.sonarJugada;
+    if (conSonido) { sonar('silbato'); }
 
     var carrera = animar(dom.lanzador, [
       { transform: 'translate(0, 0)' },
@@ -665,6 +669,7 @@
     return carrera.then(function () {
       var fotogramas;
       var opciones;
+      if (conSonido) { sonar('golpeo'); }
       if (gol) {
         fotogramas = [
           { transform: 'translate(0, 0) scale(1)' },
@@ -683,6 +688,13 @@
       }
 
       var vuelo = animar(dom.balon, fotogramas, opciones);
+      if (conSonido) {
+        /* llegada: al final del vuelo (gol) o en el toque del portero (parada) */
+        esperar(reducirMovimiento ? 0 : Math.round(opciones.duration * (gol ? 1 : 0.55))).then(function () {
+          sonar(gol ? 'red' : 'parada');
+          sonar('grito', gol);
+        });
+      }
 
       /* V2: estela — dos copias que siguen al balón con retraso y se apagan */
       if (!reducirMovimiento) {
@@ -719,6 +731,18 @@
   }
 
   /* ==========================================================
+     V4.17 · SONIDO (penaltis-V4.sonido.js)
+     El juego enciende y apaga; la vista 3D y la 2D disparan los sonidos
+     de la jugada y aquí van los de la interfaz. Sin el archivo, nada suena
+     y nada falla.
+     ========================================================== */
+  function sonar(nombre) {
+    var S = global.pocSonido;
+    if (!S || !S.activo() || !S[nombre]) { return; }
+    S[nombre].apply(S, Array.prototype.slice.call(arguments, 1));
+  }
+
+  /* ==========================================================
      VISTAS DE LA JUGADA (V3)
      ========================================================== */
 
@@ -738,6 +762,7 @@
     },
     tirar: function (p) {
       var antes = reducirMovimiento;
+      estado.sonarJugada = !p.instantaneo;
       if (p.instantaneo) { reducirMovimiento = true; }
       return chutar(p.esquina, p.gol, p.estirada).then(function () { reducirMovimiento = antes; });
     },
@@ -818,8 +843,6 @@
     vista = crearVista3D(escena3D.api);
     escena3D.pendiente = false;
     dom.escena.classList.add('is-3d');
-    dom.sonidoBoton.hidden = false;
-    if (preferenciaSonido()) { vista.sonido(true); }
     if (estado.tanda) { vista.preparar(); }
   }
 
@@ -831,7 +854,33 @@
     var activo = dom.sonidoBoton.getAttribute('aria-pressed') !== 'true';
     dom.sonidoBoton.setAttribute('aria-pressed', String(activo));
     try { global.localStorage.setItem(PREFIJO_CLAVE + 'sonido', activo ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
-    vista.sonido(activo);
+    if (global.pocSonido) { global.pocSonido.activar(activo); }
+    quitarAvisoSonido(true);
+  }
+
+  /* V4.17: la preferencia guardada se aplica al primer toque del jugador
+     (los navegadores no dejan sonar sin un gesto). */
+  function aplicarPreferenciaSonido() {
+    if (global.pocSonido && preferenciaSonido() && !global.pocSonido.activo()) {
+      global.pocSonido.activar(true);
+    }
+  }
+
+  /* V4.17: aviso discreto en el primer gol con el sonido apagado.
+     Una sola vez: se recuerda en penaltis:v4:aviso-sonido. */
+  var avisoSonidoTimer = 0;
+  function avisarSonido() {
+    if (!global.pocSonido || !global.pocSonido.disponible) { return; }
+    if (global.pocSonido.activo() || leer('aviso-sonido')) { return; }
+    dom.avisoSonido.hidden = false;
+    escribir('aviso-sonido', true);
+    avisoSonidoTimer = setTimeout(function () { quitarAvisoSonido(false); }, 5000);
+  }
+
+  function quitarAvisoSonido(porUsuario) {
+    clearTimeout(avisoSonidoTimer);
+    if (dom.avisoSonido) { dom.avisoSonido.hidden = true; }
+    if (porUsuario) { escribir('aviso-sonido', true); }
   }
 
   /* V4.7: rótulo de retransmisión en dos tiempos (golpe → firma).
@@ -1009,6 +1058,9 @@
        3D en un móvil modesto) no descuenta más de 250 ms por tic. */
     if (!document.hidden) { r.restante -= Math.min(ahora - r.ultimo, 250); }
     r.ultimo = ahora;
+    /* V4.17: tic en 3, 2 y 1 */
+    var seg = Math.ceil(r.restante / 1000);
+    if (seg <= 3 && seg >= 1 && seg !== r.ultimoTic) { r.ultimoTic = seg; sonar('tic', seg); }
     if (!r.avisado && r.restante <= 5000 && r.total > 5000) {
       r.avisado = true;
       dom.anuncio.textContent = 'Quedan 5 segundos.';
@@ -1203,6 +1255,7 @@
     dom.trayectoria.classList.remove('is-visible');
     dom.ayuda.hidden = true;
     quitarGuia();
+    if (!instantaneo && !agotado) { sonar('toque'); }
 
     /* V4: mientras corre la jugada, el panel dice qué está pasando. */
     if (!instantaneo) {
@@ -1222,6 +1275,7 @@
       diana(esquina).classList.remove('is-apuntada');
       dom.opciones.querySelectorAll('.poc-opcion').forEach(function (b) { b.classList.remove('is-apagada', 'is-elegida'); });
       mostrarRotulo(gol, { puntos: puntos, agotado: agotado, instantaneo: !!instantaneo });
+      if (gol && !instantaneo) { avisarSonido(); }
       marcarOpciones(elegida, p.correcta, esquina);
       if (!instantaneo) { vibrar(gol ? [25, 40, 25] : 60); }
 
@@ -1294,6 +1348,9 @@
     } else {
       guardarProgreso(true);
       pintarResultado(false);
+      var cuenta = contar(estado.tiros);
+      sonar('final', cuenta.goles, TIROS_POR_TANDA);
+      if (leer(claveTanda(estado.tanda.numero)) && leer(claveTanda(estado.tanda.numero)).bonusBloque) { sonar('perfecto'); }
       global.scrollTo({ top: 0, behavior: 'auto' });
     }
   }
@@ -1804,6 +1861,7 @@
       estado.indice = 0;
       estado.tiros = [];
     }
+    aplicarPreferenciaSonido();
     mostrar('juego');
     prepararTiro();
     enfocar(dom.pregunta);
@@ -1920,6 +1978,9 @@
     dom.sonidoBoton = $('poc-sonido');
     dom.sonidoBoton.setAttribute('aria-pressed', String(preferenciaSonido()));
     dom.sonidoBoton.addEventListener('click', alternarSonido);
+    dom.avisoSonido = $('poc-aviso-sonido');
+    /* V4.17: el sonido ya no depende del 3D: botón visible si el navegador tiene Web Audio */
+    dom.sonidoBoton.hidden = !(global.pocSonido && global.pocSonido.disponible);
     /* Precarga del 3D cuando el usuario se acerca a «Empezar» */
     ['pointerenter', 'focus', 'touchstart'].forEach(function (ev) {
       dom.empezar.addEventListener(ev, cargar3D, { once: true, passive: true });

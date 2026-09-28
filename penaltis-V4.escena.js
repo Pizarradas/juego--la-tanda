@@ -1299,7 +1299,11 @@ export async function crearEscena(contenedor, opciones = {}) {
     });
   });
 
-  const sonido = crearSonido();
+  /* V4.17: el sonido es común a 3D y 2D (penaltis-V4.sonido.js) y lo
+     enciende y apaga el juego. crearSonido() queda de reserva si la
+     escena se usa sin ese archivo. */
+  const compartido = !!window.pocSonido;
+  const sonido = compartido ? window.pocSonido : crearSonido();
 
   /* ==========================================================
      JUGADA: estado = f(t, plan)
@@ -1752,7 +1756,7 @@ export async function crearEscena(contenedor, opciones = {}) {
       pedir();
     },
     cancelarRepeticion() { if (reloj.modo === 'repeticion') { terminarRepeticion(); plan && evaluar(TL.fin); pedir(); } },
-    sonido(activo) { sonido.activar(!!activo); },
+    sonido(activo) { if (!compartido) sonido.activar(!!activo); },
     /* Solo pruebas: congela la jugada en t con una cámara */
     fotograma(t, p, vista) {
       plan = p ? { esquina: p.esquina, gol: !!p.gol, estirada: p.estirada || 'centro' } : null;
@@ -1841,7 +1845,7 @@ export async function crearEscena(contenedor, opciones = {}) {
       if (io) io.disconnect();
       document.removeEventListener('visibilitychange', alCambiarVisibilidad);
       if (ro) ro.disconnect();
-      sonido.destruir();
+      if (!compartido) sonido.destruir();
       render.dispose();
       lienzoGL.remove();
     }
