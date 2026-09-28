@@ -3005,6 +3005,101 @@
       60% { opacity: 1; }
       100% { opacity: 1; transform: none; }
     }
+    /* ==========================================================
+       V4.16 · MÓVIL EN VERTICAL: TODO DE UN VISTAZO
+       ========================================================== */
+    /* La escena toma el alto que calcula encajar() (JS) para que marcador,
+       pregunta, escena, reloj y respuestas quepan en la zona visible. */
+    @media (max-width: 767px) and (orientation: portrait) {
+      .poc-escena.is-encajada {
+        height: var(--poc-escena-alto);
+        transition: height 0.25s ease;
+      }
+      .poc-escena.is-encajada > svg { height: 100%; }
+
+      /* Red de seguridad: si aun así no cabe (pantallas muy bajas o
+         texto grande), las respuestas se quedan pegadas abajo, al
+         alcance del pulgar, mientras dura el penalti. */
+      body[data-poc-vista="juego"]:not([data-poc-tiro]) .poc-estadio .poc-opciones {
+        position: sticky;
+        bottom: 0;
+        z-index: 3;
+        margin-left: -0.4rem;
+        margin-right: -0.4rem;
+        padding: 0.6rem 0.4rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--poc-noche) 82%, rgba(10, 16, 32, 0));
+      }
+
+      /* Entrada: «Empezar la tanda» siempre a la vista, pegado abajo,
+         mientras se lee cómo se juega. */
+      #poc-vista-entrada .poc-acciones:has(> .ft-btn:not([hidden])) {
+        position: sticky;
+        bottom: 0;
+        z-index: 3;
+        margin-left: -1.6rem;
+        margin-right: -1.6rem;
+        padding: 2rem 1.6rem calc(1.2rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--poc-noche) 62%, rgba(10, 16, 32, 0));
+      }
+      #poc-vista-entrada .poc-acciones .ft-btn { width: 100%; }
+    }
+
+    /* Pantallas bajas (móvil pequeño con las barras del navegador): fuera
+       lo redundante para ganar escena. «Penalti N de 5» ya lo cuenta el
+       marcador con sus cinco tiros; al lector se le sigue anunciando. */
+    @media (max-width: 767px) and (orientation: portrait) and (max-height: 600px) {
+      .poc-estadio .poc-pregunta .poc-antetitulo {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      body[data-poc-vista="juego"] .poc-estadio { padding-top: 1.2rem; }
+    }
+
+    /* Guía de la primera vez, sobre la escena y sin ocupar sitio */
+    .poc-guia {
+      position: absolute;
+      left: 50%;
+      bottom: 0.8rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: max-content;
+      max-width: calc(100% - 1.6rem);
+      margin: 0;
+      padding: 0.5rem 1.2rem 0.5rem 0.8rem;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      font-size: 1.3rem;
+      line-height: 1.3;
+      font-weight: bold;
+      color: var(--poc-tinta);
+      background: var(--color-functional-warning, #f7c948);
+      box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+      animation: poc-guia-entra 0.4s ease both, poc-guia-latido 1.6s ease-in-out 0.6s infinite;
+    }
+    .poc-guia[hidden] { display: none; }
+    .poc-estadio .poc-guia { color: var(--poc-tinta); }
+    .poc-guia__mano {
+      flex: none;
+      width: 1.8rem;
+      height: 1.8rem;
+      background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 11V5.5a1.5 1.5 0 0 1 3 0V10h.5V8.5a1.5 1.5 0 0 1 3 0V10h.5a1.5 1.5 0 0 1 3 0v5c0 3.3-2.2 6-5.5 6h-1.2c-1.8 0-3.2-.8-4.2-2.2L4.6 14a1.5 1.5 0 0 1 2.3-1.9L9 14z'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 11V5.5a1.5 1.5 0 0 1 3 0V10h.5V8.5a1.5 1.5 0 0 1 3 0V10h.5a1.5 1.5 0 0 1 3 0v5c0 3.3-2.2 6-5.5 6h-1.2c-1.8 0-3.2-.8-4.2-2.2L4.6 14a1.5 1.5 0 0 1 2.3-1.9L9 14z'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    @keyframes poc-guia-entra { from { opacity: 0; transform: translate(-50%, 0.6rem); } }
+    @keyframes poc-guia-latido { 50% { transform: translate(-50%, -0.2rem); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .poc-escena.is-encajada { transition: none; }
+      .poc-guia { animation: none; }
+    }
   </style>
 </head>
 
@@ -3295,6 +3390,10 @@
                 <div id="poc-destello" class="poc-destello" aria-hidden="true"></div>
                 <p class="poc-chip poc-chip--carga" aria-hidden="true">Cargando estadio…</p>
                 <p class="poc-chip poc-chip--repeticion" aria-hidden="true">Repetición</p>
+                <!-- V4.16: guía de la primera vez (visual; el grupo de respuestas ya lo dice en su aria-label) -->
+                <p id="poc-guia" class="poc-guia" aria-hidden="true" hidden>
+                  <span class="poc-guia__mano" aria-hidden="true"></span>Toca una respuesta: chutas a esa esquina
+                </p>
                 <div id="poc-rotulo" class="poc-rotulo" aria-hidden="true">
                   <span class="poc-rotulo__velo"></span>
                   <span class="poc-rotulo__rayos"></span>

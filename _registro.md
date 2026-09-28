@@ -298,3 +298,29 @@
 - **Carga:** `penaltis-V4.html` solo lo usa si los enlaces al DS dan error (`onerror`), así que dentro del repo del DS todo sigue igual.
 - **Verificación:** se ve idéntico píxel a píxel en entrada, gol, resultado, descanso, perfecto y jugado.
 - **`index.html`:** redirige a `penaltis-V4.html` conservando los parámetros de la URL.
+
+## V4.16 · Móvil en vertical: todo de un vistazo (2026-09-28)
+
+Feedback de usuarios: en algunos móviles había que desplazarse para llegar a las respuestas y al botón de empezar, con el reloj ya corriendo.
+
+- **Diagnóstico (antes):** «Empezar la tanda» quedaba a unos 1.070 px en todos los móviles probados, fuera de la primera pantalla. En móviles bajos con las barras del navegador (360×560, 375×553), la segunda fila de respuestas (C y D) quedaba cortada. Tras el tiro, la escena salía por arriba.
+- **Encaje de la escena (`encajar()` en `penaltis-V4.juego.js`):** en móvil en vertical, la escena es la pieza elástica. Toma el alto que queda en la zona visible (`visualViewport`, sin las barras del navegador), entre 150 px y su alto natural 360:260. Así marcador, pregunta, escena, reloj y las cuatro respuestas caben juntos. Se recalcula cuando la barra del navegador aparece o desaparece y al girar.
+- **Tras el tiro:** si no cabe todo, el bloque se ancla abajo (escena, veredicto y «Siguiente penalti»). La pregunta, ya contestada, sale por arriba, y la escena puede bajar a 120 px.
+- **Sticky:** «Empezar la tanda» queda pegado abajo en la entrada. Durante el penalti, las respuestas quedan pegadas abajo como red de seguridad si aun así no caben (pantallas muy bajas o texto grande).
+- **Pantallas bajas (≤ 600 px de alto):** se oculta a la vista «Penalti N de 5», que ya cuenta el marcador (sigue para el lector de pantalla), y se reduce el margen superior del estadio.
+- **Guía de la primera vez:** en el primer penalti, hasta el primer tiro, un rótulo sobre la escena dice «Toca una respuesta: chutas a esa esquina». No ocupa sitio en el layout. Se recuerda en `penaltis:v4:guia-vista`.
+- **Sin cambios:** escritorio (≥ 768 px), móvil en horizontal (ya tenía su layout de dos columnas), reglas, reloj y controles.
+- **Verificación (Chromium, móvil táctil emulado, peor caso con la fuente de reserva):**
+
+| Pantalla | «Empezar» visible | Escena en el penalti | Respuestas visibles | Veredicto y «Siguiente» visibles |
+| --- | --- | --- | --- | --- |
+| 320×480 | — | 150 px | Sí (pegadas) | — |
+| 360×560 | Sí | 213 px | Sí | Sí |
+| 375×553 (SE, Safari) | Sí | 202 px | Sí | Sí |
+| 390×664 (13, Safari) | Sí | 259 px | Sí | Sí |
+| 360×740 | Sí | 237 px | Sí | Sí |
+| 430×740 (Pro Max, Safari) | Sí | 287 px | Sí | Sí |
+| 412×780 | Sí | 274 px | Sí | Sí |
+
+  Se jugó una tanda completa en 375×553 con los cinco penaltis bien encajados. También se comprobó al cambiar el alto a mitad de penalti (la escena crece de 174 a 248 px), con movimiento reducido y con los estados `gol`, `parada` y `tiempo`. No hay scroll horizontal ni errores de consola.
+- **Pendiente:** probar en un iPhone y un Android reales. Safari cambia el alto visible al desplazar, y la emulación no lo reproduce del todo.

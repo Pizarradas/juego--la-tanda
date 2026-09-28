@@ -512,7 +512,7 @@
   function mostrar(vista, foco) {
     VISTAS.forEach(function (v) { $('poc-vista-' + v).hidden = v !== vista; });
     document.body.setAttribute('data-poc-vista', vista);
-    if (vista !== 'juego') { dom.accionesJuego.hidden = true; pararReloj(); }
+    if (vista !== 'juego') { dom.accionesJuego.hidden = true; pararReloj(); if (dom.escena) { soltarEncaje(); } }
     if (vista === 'juego' && estado.cuenta) { clearInterval(estado.cuenta); estado.cuenta = null; }
     if (foco) {
       var el = typeof foco === 'string' ? $(foco) : foco;
@@ -1048,8 +1048,11 @@
      ========================================================== */
 
   /* V2: si las opciones no caben en pantalla, sube el bloque de juego
-     para que marcador, pregunta, escena y respuestas se vean juntos. */
+     para que marcador, pregunta, escena y respuestas se vean juntos.
+     V4.16: en móvil en vertical lo hace encajar(), que además adapta la
+     escena al alto visible. */
   function encuadrar() {
+    if (encajar('penalti')) { return; }
     var vistaJuego = $('poc-vista-juego');
     var abajo = dom.opciones.getBoundingClientRect().bottom;
     var arriba = vistaJuego.getBoundingClientRect().top;
@@ -1057,6 +1060,91 @@
       var y = global.scrollY + arriba - 12;
       global.scrollTo({ top: Math.max(0, y), behavior: reducirMovimiento ? 'auto' : 'smooth' });
     }
+  }
+
+  /* ==========================================================
+     V4.16 · ENCAJE EN MÓVIL (vertical)
+     El penalti se juega de un vistazo en cualquier alto de pantalla:
+     marcador, pregunta, escena, reloj y las cuatro respuestas caben a
+     la vez en la zona visible, descontando las barras del navegador.
+     La escena es la pieza elástica: mide lo que sobra, entre ESCENA_MIN
+     y su alto natural (360:260). Tras el tiro manda el veredicto: si
+     todo no cabe, el bloque se ancla abajo (escena + veredicto +
+     «Siguiente») y la pregunta, ya contestada, sale por arriba.
+     Se recalcula al cambiar la barra del navegador y al girar.
+     ========================================================== */
+  var ESCENA_MIN = 150;
+  var ESCENA_MIN_RESUELTO = 120; /* tras el tiro manda el veredicto */
+  var AIRE = 8;
+  var mqEncaje = global.matchMedia ? global.matchMedia('(max-width: 767px) and (orientation: portrait)') : null;
+  var encaje = { fase: null, raf: 0 };
+
+  function altoVisible() {
+    return Math.round((global.visualViewport && global.visualViewport.height) || global.innerHeight);
+  }
+
+  function soltarEncaje() {
+    dom.escena.classList.remove('is-encajada');
+    dom.escena.style.removeProperty('--poc-escena-alto');
+    encaje.fase = null;
+  }
+
+  /* fase: 'penalti' | 'resuelto' | null (solo reajusta el alto, sin desplazar) */
+  function encajar(fase) {
+    var vistaJuego = $('poc-vista-juego');
+    if (!mqEncaje || !mqEncaje.matches || vistaJuego.hidden) { soltarEncaje(); return false; }
+    if (fase) { encaje.fase = fase; }
+    var r = dom.escena.getBoundingClientRect();
+    var b = vistaJuego.getBoundingClientRect();
+    var natural = r.width * 260 / 360;
+    var encima = r.top - b.top;
+    var debajo = b.bottom - r.bottom;
+    var visible = altoVisible();
+    var alto = visible - encima - debajo - AIRE * 2;
+    var anclaAbajo = false;
+    var minimo = ESCENA_MIN;
+    if (alto < ESCENA_MIN && encaje.fase === 'resuelto') {
+      alto = visible - debajo - AIRE * 2;
+      anclaAbajo = true;
+      minimo = ESCENA_MIN_RESUELTO;
+    }
+    alto = Math.round(Math.max(minimo, Math.min(natural, alto)));
+    dom.escena.style.setProperty('--poc-escena-alto', alto + 'px');
+    dom.escena.classList.add('is-encajada');
+    document.body.setAttribute('data-poc-encaje', alto <= minimo ? 'justo' : 'holgado');
+    if (!fase) { return true; }
+    /* Destino calculado con el alto final: la escena puede estar aún en
+       transición y medirla ahora daría el alto de partida. */
+    var destino = anclaAbajo
+      ? global.scrollY + b.bottom + (alto - r.height) - visible + AIRE
+      : global.scrollY + b.top - AIRE;
+    if (Math.abs(destino - global.scrollY) > 2) {
+      global.scrollTo({ top: Math.max(0, destino), behavior: reducirMovimiento ? 'auto' : 'smooth' });
+    }
+    return true;
+  }
+
+  function reencajar() {
+    if (encaje.raf) { return; }
+    encaje.raf = global.requestAnimationFrame(function () {
+      encaje.raf = 0;
+      encajar(null);
+    });
+  }
+
+  /* V4.16: guía de la primera vez. Sobre la escena, mientras no se haya
+     chutado nunca: «Toca una respuesta: chutas a esa esquina». */
+  function pintarGuia() {
+    var ver = estado.indice === 0 && !leer('guia-vista');
+    dom.guia.hidden = !ver;
+    dom.escena.classList.toggle('is-guia', ver);
+  }
+
+  function quitarGuia() {
+    if (dom.guia.hidden) { return; }
+    dom.guia.hidden = true;
+    dom.escena.classList.remove('is-guia');
+    escribir('guia-vista', true);
   }
 
   function prepararTiro() {
@@ -1081,6 +1169,7 @@
     dom.ayuda.hidden = false;
     dom.estadoTiro.hidden = true;
     document.body.removeAttribute('data-poc-tiro');
+    pintarGuia();
     iniciarReloj();
   }
 
@@ -1113,6 +1202,7 @@
     diana(esquina).classList.add('is-apuntada');
     dom.trayectoria.classList.remove('is-visible');
     dom.ayuda.hidden = true;
+    quitarGuia();
 
     /* V4: mientras corre la jugada, el panel dice qué está pasando. */
     if (!instantaneo) {
@@ -1180,10 +1270,12 @@
   /* V4.14 · móvil: tras el tiro, el veredicto (la correcta y el dato)
      tiene que verse sin buscarlo. Las opciones que no cuentan se
      recogen por CSS y aquí se desplaza lo justo para que el veredicto
-     quede encima del botón fijo «Siguiente penalti». */
+     quede encima del botón fijo «Siguiente penalti».
+     V4.16: en vertical lo resuelve encajar('resuelto'). */
   function verVeredicto() {
     if (global.innerWidth >= 768) { return; }
     global.requestAnimationFrame(function () {
+      if (encajar('resuelto')) { return; }
       var fijo = dom.accionesJuego.getBoundingClientRect();
       var limite = (fijo.height ? fijo.top : global.innerHeight) - 12;
       var falta = dom.veredicto.getBoundingClientRect().bottom - limite;
@@ -1816,6 +1908,15 @@
     dom.destello = $('poc-destello');
     dom.escena = $('poc-escena');
     dom.escena3d = $('poc-escena3d');
+    dom.guia = $('poc-guia');
+    /* V4.16: la barra del navegador aparece y desaparece al desplazar;
+       el giro cambia el ancho. En ambos casos la escena se reajusta. */
+    if (global.visualViewport) { global.visualViewport.addEventListener('resize', reencajar); }
+    global.addEventListener('resize', reencajar);
+    if (mqEncaje) {
+      var alCambiar = function () { if (!$('poc-vista-juego').hidden) { encajar(encaje.fase || 'penalti'); } };
+      if (mqEncaje.addEventListener) { mqEncaje.addEventListener('change', alCambiar); } else if (mqEncaje.addListener) { mqEncaje.addListener(alCambiar); }
+    }
     dom.sonidoBoton = $('poc-sonido');
     dom.sonidoBoton.setAttribute('aria-pressed', String(preferenciaSonido()));
     dom.sonidoBoton.addEventListener('click', alternarSonido);
